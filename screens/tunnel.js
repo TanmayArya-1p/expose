@@ -22,6 +22,7 @@ const isAlive = async (serverUrl) => {
     return false
 }
 
+//list of all session ids
 const fetchSessions = async (serverUrl,mkey) => {
     if(!isAlive(serverUrl)) {
         return 0 
@@ -34,6 +35,15 @@ const fetchSessions = async (serverUrl,mkey) => {
     return req.json().sessions
 }
 
+//structure of session.json
+/*
+{
+sessionId1: {key:dfhdskfjd, image_hashes:[<imghas1,routeId>,<imghas2,routeId>,<imghas3,routeId>]},
+sessionId2: {key:dfhdskfjd, image_hashes:[<imghas1,routeId>,<imghas2,routeId>,<imghas3,routeId>]}
+}
+*/
+
+//takes sid and returns nested list of image_hashes
 const sessionFetch = async (serverUrl,sid,skey,mkey) => {
     if(!isAlive(serverUrl)){
         return 0
@@ -46,6 +56,8 @@ const sessionFetch = async (serverUrl,sid,skey,mkey) => {
     return req.json()
 }
 
+
+//takes image hash and appends to sessionid image_hashes. kicks first out.
 const appendImg = async (serverUrl, sid,skey,mkey , imghash, rid) => {
     if(!isAlive(serverUrl)){
         return 0
@@ -59,6 +71,7 @@ const appendImg = async (serverUrl, sid,skey,mkey , imghash, rid) => {
     return req.json()
 }
 
+//returns sessionId of new session
 const sessionCreate = async (serverUrl,mkey, skey) => {
     if(!isAlive(serverUrl)) {
         return 0
@@ -71,6 +84,7 @@ const sessionCreate = async (serverUrl,mkey, skey) => {
     return req.json().session_id
 }   
 
+//opposite
 const sessionDestroy = async (serverUrl,mkey,sid,skey) => {
     if(!isAlive(serverUrl)) {
         return 0
@@ -84,6 +98,7 @@ const sessionDestroy = async (serverUrl,mkey,sid,skey) => {
 
 }
 
+//returns {routeid1:true|false, routeid2: true|false} true means open false means holding file
 const fetchRoutes =async (serverUrl , mkey) => {
     if(!isAlive(serverUrl)) {
         return 0
@@ -96,6 +111,7 @@ const fetchRoutes =async (serverUrl , mkey) => {
     return req.json()
 }
 
+//writes into photo lib 
 const fetchFile = async (serverUrl,authKey,masterKey,routeId) => {
     if(!isAlive()) {
         return 0 
@@ -199,6 +215,7 @@ const uploadFile = async (serverUrl,photo,authkey,mkey) => {
 //     return [hashList,photos]
 //}
 
+//return hashes cruptojs.md5 of latest 3 images in array. photos.edges object of latest 3 phots
 const latestHashes = async (sessionstart) => {
     try {
       const photos = await CameraRoll.getPhotos({
@@ -208,9 +225,9 @@ const latestHashes = async (sessionstart) => {
       });
         const latestPhotos = photos.edges.map(edge => edge.node.image.uri);
         const computedHashes = await Promise.all(latestPhotos.map(async uri => {
-        const fileContents = await RNFS.readFile(uri, 'base64');
-        const hash = CryptoJS.MD5(CryptoJS.enc.Base64.parse(fileContents)).toString();
-        return hash;
+          const fileContents = await RNFS.readFile(uri, 'base64');
+          const hash = CryptoJS.MD5(CryptoJS.enc.Base64.parse(fileContents)).toString();
+          return hash;
       }));
       return [computedHashes,photos.edges]
     } catch (error) {
@@ -271,6 +288,8 @@ const photoLibListener = async (serverUrl,skey,sid,mkey,sessionstart) => {
     //         }
 
     // }
+
+    //prevImgList=currentImgList
     [prevImgList,photoObjects] = await latestHashes(sessionstart)
 
 }
