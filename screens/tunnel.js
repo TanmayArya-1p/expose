@@ -53,7 +53,8 @@ const sessionFetch = async (serverUrl,sid,skey,mkey) => {
         headers: {'Content-Type': 'application/json'},
         };
     req = await fetch(`${serverUrl}/session/${sid}?session_key=${skey}&master_key=${mkey}`,rq)
-    return req.json()
+    r= await req.json()
+    return r
 }
 
 
@@ -65,10 +66,13 @@ const appendImg = async (serverUrl, sid,skey,mkey , imghash, rid) => {
     rq = {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: {"data" : [imghash,rid]}
+        body: JSON.stringify({"data" : [imghash,rid]})
         };
     req = await fetch(`${serverUrl}/session/${sid}/appendImg?session_key=${skey}&master_key=${mkey}`,rq)
-    return req.json()
+    console.log(req)
+    r= await req.json()
+    console.log(r)
+    return r
 }
 
 //returns sessionId of new session
@@ -117,7 +121,7 @@ const fetchFile = async (serverUrl,authKey,masterKey,routeId) => {
         return 0 
     }
 
-    const url = `${serverUrl}/fetch/${routeId}?authkey=${authKey}&master_key=${masterKey}`;
+    const url = `${serverUrl}/fetch/${routeId}?authkey=${authKey}&master_key=${masterKey}&ses=1`;
     console.log(`Request URL: ${url}`);
     try {
       const response = await axios.get(url, { responseType: 'arraybuffer' });
@@ -132,9 +136,20 @@ const fetchFile = async (serverUrl,authKey,masterKey,routeId) => {
           filename = match[1].replace(/['"]/g, '');
         }
       }
-    const path = `${RNFS.DownloadDirectoryPath}/${filename}.${
-      response.headers['content-type'].split('/')[1]
-    }`;
+    dt = new Date()
+
+    function correctDate(a) {
+        otpt = String(a)
+        if(otpt.length == 1){
+            return "0"+otpt
+        }
+        else {
+            return otpt
+        }
+    }
+    filename= `IMG_${dt.getFullYear()}${correctDate(dt.getMonth()+1)}${correctDate(dt.getDate())}_${correctDate(dt.getHours())}${correctDate(dt.getMinutes())}${correctDate(dt.getSeconds())}`
+    //const path = `${RNFS.ExternalStorageDirectoryPath}/DCIM/Camera/${filename}.${response.headers['content-type'].split('/')[1]}`;
+    const path = `${RNFS.ExternalStorageDirectoryPath}/Download/${filename}.jpg`;
       console.log(`Saving file to: ${path}`);
 
       const granted = await PermissionsAndroid.request(
@@ -151,8 +166,8 @@ const fetchFile = async (serverUrl,authKey,masterKey,routeId) => {
       if (granted === PermissionsAndroid.RESULTS.GRANTED) {
         const base64Data = base64.fromByteArray(new Uint8Array(response.data));
         await RNFS.writeFile(path, base64Data, 'base64');
-        CameraRoll.save(path)
-        Alert.alert('Success', `File successfully downloaded to ${path}`);
+        CameraRoll.saveAsset(`file://${path}`,{album:"Camera"}).then(onfulfilled => console.log(onfulfilled))
+        //Alert.alert('Success', `File successfully downloaded to ${path}`);
       } else {
         Alert.alert('Permission Denied', 'Storage permission denied');
       }
@@ -257,23 +272,51 @@ function areArraysEqual(arr1, arr2) {
     return true;
 }
 
+function membership(search,l) {
+    for(let i =0 ; i<l.length; i++) {
+        let k = l[i]
+        if(search == k) {
+            return true
+        }
+    }
+    return false
+}
+
 var prevImgList = []
+var uploaded = []
 const photoLibListener = async (serverUrl,skey,sid,mkey,sessionstart) => {
 
     
     var [currentImgList, photoObjects] = await latestHashes(sessionstart)
-
+    console.log(!areArraysEqual(currentImgList,prevImgList))
     if(!areArraysEqual(currentImgList,prevImgList)){
         console.log(prevImgList,currentImgList)
         for(let i = 0;i<currentImgList.length; i++){
             if(!(currentImgList[i] in prevImgList)){
                 console.log(`Uploading Image ${currentImgList[i]} , ${i+1}/${currentImgList.length}`)
-                resp = await uploadFile(serverUrl,photoObjects[i],skey,mkey)
+                if(!(membership(currentImgList[i],uploaded))){
+                    resp = await uploadFile(serverUrl,photoObjects[i],skey,mkey)
+                    uploaded.push(currentImgList[i])
+                    console.log(`uploaded : ${uploaded.length}`)
+                }
                 console.log(resp)
-                // await appendImg(serverUrl,sid,skey,mkey,currentImgList[i],resp["route_id"])
+                await appendImg(serverUrl,sid,skey,mkey,currentImgList[i],resp["route_id"])
             }
         }
     }
+    serverImgList = await sessionFetch(serverUrl,sid,skey,mkey)
+    console.log("SERVER IMG LIST",serverImgList)
+    if(!areArraysEqual(serverImgList.map((i) => i[0]),currentImgList)){
+        console.log("SERVER RECORDS DONT MATCH")
+        for(var i=0;i<serverImgList.length;i++) {
+            if(!membership(serverImgList[i][0],currentImgList)) {
+                console.log(`DOWNLOADING FROM RID ${serverImgList[i][1]}`)
+                await fetchFile(serverUrl,skey,mkey,serverImgList[i][1])
+            }
+            
+        }
+    }
+    
     // r = sessionFetch(serverUrl,sid,skey,mkey)
     // if(r!= 0) {
     //     console.log(r)
