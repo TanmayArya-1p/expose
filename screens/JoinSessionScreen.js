@@ -21,8 +21,8 @@ export default function JoinSessionScreen({ navigation }) {
   var [serverUrl, setServerUrl] = useState('');
 
   
-  serverUrl = 'http://51.20.65.50:3000'
-  sessionId = "38ad4b50fce7"
+  serverUrl = 'http://16.171.177.71:3000'
+  sessionId = "75403d0baa70"
   masterKey = "123"
   sessionKey = "123"
 
