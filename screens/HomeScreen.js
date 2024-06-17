@@ -17,7 +17,7 @@ export default function HomeScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <Button title="Join Session" onPress={() => navigation.navigate('JoinSession')} />
-      <Button title="Create Session" onPress={() =>tester()} />
+      <Button title="Create Session" onPress={() => navigation.navigate('CreateSession')} />
     </View>
   );
 }
