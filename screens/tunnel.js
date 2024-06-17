@@ -72,7 +72,8 @@ const sessionCreate = async (serverUrl,mkey, skey) => {
         headers: {'Content-Type': 'application/json'}
         };
     req = await fetch(`${serverUrl}/sessionCreate?master_key=${mkey}&session_key=${skey}`,rq)
-    return req.json().session_id
+    resp = await req.json()
+    return resp.session_id
 }   
 
 const sessionDestroy = async (serverUrl,mkey,sid,skey) => {
