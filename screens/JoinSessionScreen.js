@@ -1,6 +1,6 @@
 // screens/JoinSessionScreen.js
-import React, { useState } from 'react';
-import { View, TextInput, Button, StyleSheet,useWindowDimensions } from 'react-native';
+import React, { useState , useEffect } from 'react';
+import { View, TextInput, Button, StyleSheet,useWindowDimensions,Text,TouchableOpacity, ScrollView } from 'react-native';
 import ConcatStringDropdown from './ConcatStringDropdown';
 import { ReactNativeScannerView } from "@pushpendersingh/react-native-scanner";
 
@@ -14,23 +14,37 @@ async function transition(navigation,serverUrl,sessionId,sessionKey,masterKey) {
     });
     return 0
   }
-  await tunnel.startListenerThread(serverUrl,sessionKey,sessionId,masterKey)
-  navigation.navigate('Listening', { sessionKey, sessionId, masterKey, serverUrl })
+  const IntId = await tunnel.startListenerThread(serverUrl,sessionKey,sessionId,masterKey)
+  navigation.navigate('Listening', { sessionKey, sessionId, masterKey, serverUrl, IntId })
   return 1
 }
-var qrcodebuttontext = "Show QR Code Scanner"
+var qrcodebuttontext = "QR Code Scanner"
 export default function JoinSessionScreen({ navigation }) {
+
+
 
   const [isVisible, setIsVisible] = useState(false);
   
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+      e.preventDefault();
+      toggleElement()
+      navigation.dispatch(e.data.action);
+    });
+    return unsubscribe
+  },[navigation]);
+
+
+
   const toggleElement = () => {
     setIsVisible(!isVisible);
     console.log(qrcodebuttontext)
-    if(qrcodebuttontext == "Show QR Code Scanner"){
+    if(qrcodebuttontext == "QR Code Scanner"){
       qrcodebuttontext = "Hide QR Code Scanner"
     }
     else {
-      qrcodebuttontext = "Show QR Code Scanner"
+      qrcodebuttontext = "QR Code Scanner"
     }
     console.log(qrcodebuttontext)
   };
@@ -55,7 +69,7 @@ export default function JoinSessionScreen({ navigation }) {
     }
 
   }
-
+  
   
   //serverUrl = 'http://16.171.177.71:3000'
   //sessionId = "75403d0baa70"
@@ -64,41 +78,48 @@ export default function JoinSessionScreen({ navigation }) {
   //concatstring = `123|http://16.171.177.71:3000|75403d0baa70|123`
   const {height, width} = useWindowDimensions();
   return (
-    <View style={styles.container}>
+    <View style={styles.container} className="flex-1 bg-white">
+      <Text style={styles.header}>Join Session</Text>
+      <ConcatStringDropdown className="" func={(inputst) => setConcatString(inputst)}  />
       <TextInput
         style={styles.input}
         placeholder="Session Key"
         value={sessionKey}
         onChangeText={setSessionKey}
+        placeholderTextColor="#666"
       />
       <TextInput
         style={styles.input}
         placeholder="Session ID"
         value={sessionId}
         onChangeText={setSessionId}
+        placeholderTextColor="#666"
       />
       <TextInput
         style={styles.input}
         placeholder="Master Key"
         value={masterKey}
         onChangeText={setMasterKey}
+        placeholderTextColor="#666"
       />
       <TextInput
         style={styles.input}
         placeholder="Server URL"
         value={serverUrl}
         onChangeText={setServerUrl}
+        placeholderTextColor="#666"
       />
-      <Button
-        title="Submit"
-        onPress={() => transition(navigation,serverUrl,sessionId,sessionKey,masterKey)}
-      />
-      <ConcatStringDropdown func={(inputst) => setConcatString(inputst)}  />
-      <Button title={qrcodebuttontext} onPress={toggleElement} />
+      <TouchableOpacity  style={styles.container1} onPress={() => transition(navigation,serverUrl,sessionId,sessionKey,masterKey)}>
+          <Text style={styles.button}>Join Session</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity className="mx-2" style={styles.container1} onPress={toggleElement}>
+          <Text style={styles.button}>{qrcodebuttontext}</Text>
+      </TouchableOpacity>
             {isVisible && (
                 <View style={styles.revealedElement}>
                           <ReactNativeScannerView
-                          style={{ height, width }}
+                          style={{height,width}}
                           onQrScanned={(value: any) => {
                             console.log(value.nativeEvent.value);
                             if(value.nativeEvent.value != null){
@@ -111,26 +132,22 @@ export default function JoinSessionScreen({ navigation }) {
             )}
 
     </View>
-        
+      
 
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   input: {
     height: 40,
     borderColor: 'gray',
     borderWidth: 1,
     marginBottom: 10,
     paddingLeft: 8,
-    width: '80%',
+    width: '90%',
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius:3
   },
   dropdownContainer: {
     marginBottom: 16,
@@ -152,6 +169,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 8,
     paddingHorizontal: 8,
+    fontFamily:"courier"
   },
   revealedElement: {
     marginTop: 20,
@@ -160,5 +178,63 @@ const styles = StyleSheet.create({
     backgroundColor: 'lightblue',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  container: {
+    flex:1,
+    backgroundColor: "rgba(255,255,255,1)",
+    alignItems: "center",
+    borderRadius: 3,
+    paddingLeft: 16,
+    paddingRight: 16,
+    borderWidth: 1,
+    borderColor: "#e3e3e3",
+    shadowColor: "rgba(179,179,179,1)",
+    shadowOffset: {
+      width: 3,
+      height: 3
+    },
+    elevation: 5,
+    shadowOpacity: 0.82,
+    shadowRadius: 0,
+    overflow: "visible"
+  },
+  button: {
+    color: "rgba(0,0,0,1)",
+    fontSize: 17,
+    textAlign: "center",
+    fontFamily : "Roboto",
+    padding: 4,
+  },
+  header:{
+    fontFamily: "Rubik-Black",
+    fontSize: 40,
+    textAlign: "center",
+    color: "rgba(0,0,0,1)",
+    padding: 2,
+  },
+  container1: {
+    marginBottom: 10,
+    backgroundColor: "rgba(255,255,255,1)",
+    justifyContent: "center",
+    alignItems: "center",
+    flexDirection: "row",
+    borderRadius: 3,
+    paddingLeft: 16,
+    paddingRight: 16,
+    borderWidth: 1,
+    borderColor: "#e3e3e3",
+    shadowColor: "rgba(179,179,179,1)",
+    shadowOffset: {
+      width: 3,
+      height: 3
+    },
+    elevation: 5,
+    shadowOpacity: 0.82,
+    shadowRadius: 0,
+    overflow: "visible",
+  },
+  qrc: {
+    height:"40%",
+    width: "100%"
   }
 });
