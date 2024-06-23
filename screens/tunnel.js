@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { CameraRoll } from '@react-native-camera-roll/camera-roll';
 import CryptoJS from 'react-native-crypto-js';
+import BackgroundTimer from 'react-native-background-timer';
 
 
 const isAlive = async (serverUrl) => {
@@ -14,7 +15,7 @@ const isAlive = async (serverUrl) => {
     method: 'GET',
     headers: {'Content-Type': 'application/json'},
     };
-
+    
     const req = await fetch(serverUrl,rq)
     if (String(req.status) == "200") {
         return true
@@ -237,7 +238,8 @@ const latestHashes = async (sessionstart) => {
 async function startListenerThread(serverUrl,skey,sid,mkey) {
     session_start = Date.now()
     console.log(`LISTENER STARTED : ${session_start}`)
-    setInterval(photoLibListener, 10000,serverUrl,skey,sid,mkey , session_start);
+    const IntId = await BackgroundTimer.setInterval(photoLibListener, 10000,serverUrl,skey,sid,mkey , session_start);
+    return IntId
 }
 
 function areArraysEqual(arr1, arr2) {
