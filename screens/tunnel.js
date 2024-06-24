@@ -10,24 +10,31 @@ import CryptoJS from 'react-native-crypto-js';
 import BackgroundTimer from 'react-native-background-timer';
 
 
-const isAlive = async (serverUrl) => {
-    rq = {
-    method: 'GET',
-    headers: {'Content-Type': 'application/json'},
-    };
-    
-    const req = await fetch(serverUrl,rq)
-    if (String(req.status) == "200") {
-        return true
-    }
-    return false
+async function isAlive(serverUrl) {
+    let fixedString = '{"message":"Relay Server is Alive"}'
+    const timeoutPromise = new Promise((resolve) => {
+        setTimeout(() => resolve(false), 2000);
+    });
+    const fetchPromise = fetch(serverUrl)
+        .then(response => {
+            if (response.status !== 200) {
+                return false;
+            }
+            console.log("PASSED 200 CHECKPOINT")
+            return response.json().then(data => {
+                console.log(JSON.stringify(data))
+                return JSON.stringify(data) === fixedString;
+            }).catch(() => {
+                return false;
+            });
+        })
+        .catch(() => {
+            return false;
+        });
+    return Promise.race([fetchPromise, timeoutPromise]);
 }
 
-//list of all session ids
 const fetchSessions = async (serverUrl,mkey) => {
-    if(!isAlive(serverUrl)) {
-        return 0 
-    }
     rq = {
         method: 'GET',
         headers: {'Content-Type': 'application/json'},
@@ -46,9 +53,6 @@ sessionId2: {key:dfhdskfjd, image_hashes:[<imghas1,routeId>,<imghas2,routeId>,<i
 
 //takes sid and returns nested list of image_hashes
 const sessionFetch = async (serverUrl,sid,skey,mkey) => {
-    if(!isAlive(serverUrl)){
-        return 0
-    }
     rq = {
         method: 'GET',
         headers: {'Content-Type': 'application/json'},
@@ -61,9 +65,6 @@ const sessionFetch = async (serverUrl,sid,skey,mkey) => {
 
 //takes image hash and appends to sessionid image_hashes. kicks first out.
 const appendImg = async (serverUrl, sid,skey,mkey , imghash, rid) => {
-    if(!isAlive(serverUrl)){
-        return 0
-    }
     rq = {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -78,23 +79,19 @@ const appendImg = async (serverUrl, sid,skey,mkey , imghash, rid) => {
 
 //returns sessionId of new session
 const sessionCreate = async (serverUrl,mkey, skey) => {
-    if(!isAlive(serverUrl)) {
-        return 0
-    }
     rq = {
         method: 'POST',
         headers: {'Content-Type': 'application/json'}
         };
+    console.log("REQUESTING")
     req = await fetch(`${serverUrl}/sessionCreate?master_key=${mkey}&session_key=${skey}`,rq)
+    console.log("REQUESted")
     resp = await req.json()
     return resp.session_id
 }   
 
 //opposite
 const sessionDestroy = async (serverUrl,mkey,sid,skey) => {
-    if(!isAlive(serverUrl)) {
-        return 0
-    }
     rq = {
         method: 'POST',
         headers: {'Content-Type': 'application/json'}
@@ -106,9 +103,6 @@ const sessionDestroy = async (serverUrl,mkey,sid,skey) => {
 
 //returns {routeid1:true|false, routeid2: true|false} true means open false means holding file
 const fetchRoutes =async (serverUrl , mkey) => {
-    if(!isAlive(serverUrl)) {
-        return 0
-    }
     rq = {
         method: 'GET',
         headers: {'Content-Type': 'application/json'}
@@ -119,10 +113,6 @@ const fetchRoutes =async (serverUrl , mkey) => {
 
 //writes into photo lib 
 const fetchFile = async (serverUrl,authKey,masterKey,routeId) => {
-    if(!isAlive()) {
-        return 0 
-    }
-
     const url = `${serverUrl}/fetch/${routeId}?authkey=${authKey}&master_key=${masterKey}&ses=1`;
     console.log(`Request URL: ${url}`);
     try {
@@ -255,7 +245,7 @@ const latestHashes = async (sessionstart) => {
 async function startListenerThread(serverUrl,skey,sid,mkey) {
     session_start = Date.now()
     console.log(`LISTENER STARTED : ${session_start}`)
-    const IntId = await BackgroundTimer.setInterval(photoLibListener, 10000,serverUrl,skey,sid,mkey , session_start);
+    const IntId = await BackgroundTimer.setInterval(() => {photoLibListener(serverUrl,skey,sid,mkey , session_start)}, 10000);
     return IntId
 }
 

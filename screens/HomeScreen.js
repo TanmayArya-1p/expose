@@ -40,9 +40,9 @@ export default function HomeScreen({ navigation }) {
       </View>
     </View>
     <View className="bg-white flex-row align-left items-end justify-end">
-      {/* <TouchableOpacity style = {styles.container1} onPress={() => console.log("da")}>
+      <TouchableOpacity style = {styles.container1} onPress={() => Linking.openURL("https://github.com/TanmayArya-1p/expose/blob/main/README.md")}>
           <Icon name="information-outline" size={25} color="black" style={styles.icon} />
-      </TouchableOpacity> */}
+      </TouchableOpacity>
       <TouchableOpacity style = {styles.container1} onPress={() => Linking.openURL("https://github.com/TanmayArya-1p/expose")}>
           <Icon name="github" size={25} color="black" style={styles.icon} />
       </TouchableOpacity>
