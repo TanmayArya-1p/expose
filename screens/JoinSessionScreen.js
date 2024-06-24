@@ -1,19 +1,27 @@
 // screens/JoinSessionScreen.js
 import React, { useState , useEffect } from 'react';
-import { View, TextInput, Button, StyleSheet,useWindowDimensions,Text,TouchableOpacity, ScrollView } from 'react-native';
+import { View, TextInput, Button, StyleSheet,useWindowDimensions,Text,TouchableOpacity, ScrollView , Alert} from 'react-native';
 import ConcatStringDropdown from './ConcatStringDropdown';
 import { ReactNativeScannerView } from "@pushpendersingh/react-native-scanner";
 
 
 async function transition(navigation,serverUrl,sessionId,sessionKey,masterKey) {
-  const tunnel = await require("./tunnel")
-  if(!tunnel.isAlive(serverUrl)){
-    Toast.show({
-      type: 'error',
-      text1: 'Failed to Join Session'
-    });
+  if(serverUrl == "" || sessionId == "" || sessionKey == "" || masterKey == ""){
+    Alert.alert(
+      'Missing Fields',
+      'Fill Out All Required Fields Before Joining a Session. Required Fields: Master Key, Session Key, Session ID, Server URL',
+    );
     return 0
   }
+  const tunnel = await require("./tunnel")
+  // sesses= await tunnel.fetchSessions()
+  // if(!(sessionId in sesses)){
+  //   Alert.alert(
+  //     'Invalid Session ID',
+  //     'The Session ID you have entered is invalid. Please try again.',
+  //   );
+  //   return 0
+  // }
   const IntId = await tunnel.startListenerThread(serverUrl,sessionKey,sessionId,masterKey)
   navigation.navigate('Listening', { sessionKey, sessionId, masterKey, serverUrl, IntId })
   return 1
@@ -123,8 +131,10 @@ export default function JoinSessionScreen({ navigation }) {
                           onQrScanned={(value: any) => {
                             console.log(value.nativeEvent.value);
                             if(value.nativeEvent.value != null){
-                              toggleElement()
-                              setConcatString(value.nativeEvent.value);
+                              if(value.nativeEvent.value.slice(0,6) == "exp:||"){
+                                toggleElement()
+                                setConcatString(value.nativeEvent.value.slice(6));
+                              }
                             }
                             }}
                           />

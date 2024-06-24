@@ -1,21 +1,30 @@
 // screens/CreateSessionScreen.js
 import React, { useState } from 'react';
-import { View, TextInput, Button, StyleSheet, Text , TouchableOpacity } from 'react-native';
-import Toast from 'react-native-toast-message';
+import { View, TextInput, Button, StyleSheet, Text , TouchableOpacity, Alert } from 'react-native';
 
 
 async function createsessiononcss(navigation,serverUrl,masterKey,sessionKey) {
-  const tunnel = await require("./tunnel")
-  if(!tunnel.isAlive(serverUrl)){
+  if(serverUrl=="" || masterKey=="" || sessionKey==""){
+    Alert.alert(
+      'Missing Fields',
+      'Fill Out All Required Fields Before Creating a Session. Required Fields: Master Key, Session Key, Server URL',
+    );
     return 0
   }
-
-  sessionId = await tunnel.sessionCreate(serverUrl,masterKey,sessionKey)
-  await Toast.show({
-    type: 'success',
-    text1: 'Session Created',
-    text2: `SID: ${sessionId}`,
+  const tunnel = await require("./tunnel")
+  tunnel.isAlive(serverUrl).then(srvstat => {
+    if(!srvstat){
+      Alert.alert(
+        'Invalid Server URL',
+        `Server at '${serverUrl}' is Unresponsive`,
+      );
+      return 0
+    }
   });
+  // console.log("CREATE SESSION PRESSED")
+  // let servstat = await tunnel.isAlive(serverUrl)
+  // console.log("SERVERSTAT" , serverstat)
+  sessionId = await tunnel.sessionCreate(serverUrl,masterKey,sessionKey)
   console.log("SES ID",sessionId)
   const IntId = await tunnel.startListenerThread(serverUrl,sessionKey,sessionId,masterKey)
   navigation.navigate('Listening', { sessionKey, sessionId, masterKey, serverUrl, IntId })
@@ -25,7 +34,7 @@ export default function CreateSessionScreen({ navigation }) {
   const [sessionKey, setSessionKey] = useState('');
   const [masterKey, setMasterKey] = useState('');
   var [serverUrl, setServerUrl] = useState('');
-  //serverUrl= "http://13.60.58.24:3000"
+  //serverUrl = "http://16.171.161.157:3000"
   return (
     <View style={styles.container} className="flex-1 bg-white">
       <Text style={styles.header}>Create Session</Text>

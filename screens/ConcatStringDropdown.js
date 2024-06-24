@@ -12,7 +12,7 @@ const ConcatStringDropdown = ({ func }) => {
 
     // You can perform any action you want with the text input value here
   };
-  //textInputValue = `123|http://13.60.58.24:3000|75403d0baa70|123`
+  //textInputValue = `123|http://16.171.161.157:3000|897c22599e2e|123`
 
   return (
     <View style={styles.container} className="mt-5">

@@ -6,6 +6,8 @@ import QRCode from 'react-native-qrcode-svg';
 import BackgroundTimer from 'react-native-background-timer';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Toast from 'react-native-toast-message';
+
 
 
 export default function ListeningScreen({ route }) {
@@ -14,13 +16,17 @@ export default function ListeningScreen({ route }) {
   const [revealKey, setRevealKey] = useState(false);
   const [revealKey1, setRevealKey1] = useState(false);
   const [ServerAlive,SetServerAlive]  = useState(false)
-
+  Toast.show({
+    type: 'success',
+    text1: 'Listening At:',
+    text2: `{serverUrl}`
+  });
   const serverAliveChecker = async () => {
     const tunnel = await require("./tunnel")
     let t = await tunnel.isAlive(serverUrl)
-    console.log(t,serverUrl)
+    SetServerAlive(t)
   }
-  let PingingSIID = setInterval(serverAliveChecker,30000)
+  let PingingSIID = setInterval(serverAliveChecker,10000)
   const copyToClipboard = (text) => {
     Clipboard.setString(text)
   };
@@ -46,7 +52,8 @@ export default function ListeningScreen({ route }) {
         {
           text: "End Listener",
           onPress: () => {
-             clearInterval(PingingSIID)
+            console.log(PingingSIID)
+            clearInterval(PingingSIID)
             stopListener(IntId)
             navigation.dispatch(e.data.action);
           },
@@ -60,7 +67,7 @@ export default function ListeningScreen({ route }) {
   },[navigation]);
 
 
-
+  let logoFromFile = require('../assets/Expose.png');
   return (
     <View style={styles.container} className="bg-white">
       <Text style={styles.header}>Listening</Text>
@@ -76,7 +83,7 @@ export default function ListeningScreen({ route }) {
         <Text style={styles.texty}>Session Key: {revealKey ? `${sessionKey} (Tap to Hide)` : '******  (Tap to Reveal)'}</Text>
       </TouchableOpacity>
       <View style={styles.concatbox} className = "mt-10">
-        <Text className="mb-4" style={styles.texty}>Concat String</Text>
+        <Text className="mb-2" style={styles.texty2}>Concat String</Text>
         <View className="flex-row">
           <Text style={styles.textInput} className="">{`${masterKey}|${serverUrl}|${sessionId}|${sessionKey}`.substring(0,30)+`...`}</Text>
           <TouchableOpacity className="mx-2" style = {styles.container1} onPress={() => copyToClipboard(`${masterKey}|${serverUrl}|${sessionId}|${sessionKey}`)}>
@@ -94,7 +101,7 @@ export default function ListeningScreen({ route }) {
       </View>
     <View style={styles.concatbox}>
       <View style={styles.qrCodeContainer} className="mb-5">
-        {`${masterKey}|${serverUrl}|${sessionId}|${sessionKey}` ? <QRCode value={`${masterKey}|${serverUrl}|${sessionId}|${sessionKey}`} size={200} /> : null}
+        {`${masterKey}|${serverUrl}|${sessionId}|${sessionKey}` ? <QRCode value={`exp:||${masterKey}|${serverUrl}|${sessionId}|${sessionKey}`} size={200} logo={logoFromFile} /> : null}
       </View>
     </View>
       <Text className="">Go Back to End Listener</Text>
@@ -110,6 +117,12 @@ const styles = StyleSheet.create({
   },
   texty1: {
     fontFamily: "Rubik-Regular",
+    fontSize: 18,
+    textAlign: 'center',
+    justifyContent: 'center',
+  },
+    texty2: {
+    fontFamily: "Rubik-Black",
     fontSize: 18,
     textAlign: 'center',
     justifyContent: 'center',
