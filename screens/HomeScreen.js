@@ -1,10 +1,10 @@
 // screens/HomeScreen.js
 import React from 'react';
-import { View, Button, StyleSheet, TouchableOpacity, Text, Linking } from 'react-native';
+import { View, Button, StyleSheet, TouchableOpacity, Text, Linking, Image } from 'react-native';
 import { CameraRoll } from '@react-native-camera-roll/camera-roll';
 import RNFS from 'react-native-fs';
 import { NativeWindStyleSheet } from 'nativewind';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+//import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 function tester() {
 
@@ -40,11 +40,13 @@ export default function HomeScreen({ navigation }) {
       </View>
     </View>
     <View className="bg-white flex-row align-left items-end justify-end">
-      <TouchableOpacity style = {styles.container1} onPress={() => Linking.openURL("https://github.com/TanmayArya-1p/expose/blob/main/README.md")}>
-          <Icon name="information-outline" size={25} color="black" style={styles.icon} />
-      </TouchableOpacity>
       <TouchableOpacity style = {styles.container1} onPress={() => Linking.openURL("https://github.com/TanmayArya-1p/expose")}>
-          <Icon name="github" size={25} color="black" style={styles.icon} />
+        <Image
+        style={styles.tinyLogo}
+        source={{
+          uri: 'https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png',
+        }}
+        />
       </TouchableOpacity>
     </View>
     </View>
@@ -85,7 +87,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: "rgba(0,0,0,1)",
     padding: 4,
-  }
+  },
+  tinyLogo: {
+    width: 30,
+    height: 30,
+  },
 });
 
 NativeWindStyleSheet.create({
