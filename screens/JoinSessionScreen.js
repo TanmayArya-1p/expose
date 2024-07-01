@@ -2,7 +2,8 @@
 import React, { useState , useEffect } from 'react';
 import { View, TextInput, Button, StyleSheet,useWindowDimensions,Text,TouchableOpacity, ScrollView , Alert} from 'react-native';
 import ConcatStringDropdown from './ConcatStringDropdown';
-import { ReactNativeScannerView } from "@pushpendersingh/react-native-scanner";
+//import { ReactNativeScannerView } from "@pushpendersingh/react-native-scanner";
+import {Camera, Code, useCameraDevice,useCodeScanner} from 'react-native-vision-camera'
 
 
 async function transition(navigation,serverUrl,sessionId,sessionKey,masterKey) {
@@ -33,6 +34,8 @@ export default function JoinSessionScreen({ navigation }) {
 
   const [isVisible, setIsVisible] = useState(false);
   
+  const device = useCameraDevice("back")
+
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', (e) => {
@@ -49,7 +52,7 @@ export default function JoinSessionScreen({ navigation }) {
     setIsVisible(!isVisible);
     console.log(qrcodebuttontext)
     if(qrcodebuttontext == "QR Code Scanner"){
-      qrcodebuttontext = "Hide QR Code Scanner"
+      qrcodebuttontext = "Close QR Code Scanner"
     }
     else {
       qrcodebuttontext = "QR Code Scanner"
@@ -77,7 +80,18 @@ export default function JoinSessionScreen({ navigation }) {
     }
 
   }
-  
+  const codeScanner = useCodeScanner({
+    codeTypes: ['qr', 'ean-13'],
+    onCodeScanned: (codes: Code[]) => {
+      console.log(codes[0].value);
+      if(codes[0].value != null){
+        if(codes[0].value.slice(0,6) == "exp:||"){
+          toggleElement()
+          setConcatString(codes[0].value.slice(6));
+        }
+      }
+    },
+  });
   
   //serverUrl = 'http://16.171.177.71:3000'
   //sessionId = "75403d0baa70"
@@ -120,27 +134,17 @@ export default function JoinSessionScreen({ navigation }) {
       <TouchableOpacity  style={styles.container1} onPress={() => transition(navigation,serverUrl,sessionId,sessionKey,masterKey)}>
           <Text style={styles.button}>Join Session</Text>
       </TouchableOpacity>
-
-      <TouchableOpacity className="mx-2" style={styles.container1} onPress={toggleElement}>
+            {isVisible && (
+                      <Camera
+                      style={StyleSheet.absoluteFill}
+                      codeScanner={codeScanner}
+                      device={device}
+                      isActive={true}
+                    />
+            )}
+      <TouchableOpacity className="mx-2 opacity-40" style={styles.container1} onPress={toggleElement}>
           <Text style={styles.button}>{qrcodebuttontext}</Text>
       </TouchableOpacity>
-            {isVisible && (
-                <View style={styles.revealedElement}>
-                          <ReactNativeScannerView
-                          style={{height,width}}
-                          onQrScanned={(value: any) => {
-                            console.log(value.nativeEvent.value);
-                            if(value.nativeEvent.value != null){
-                              if(value.nativeEvent.value.slice(0,6) == "exp:||"){
-                                toggleElement()
-                                setConcatString(value.nativeEvent.value.slice(6));
-                              }
-                            }
-                            }}
-                          />
-                </View>
-            )}
-
     </View>
       
 

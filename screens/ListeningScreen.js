@@ -6,7 +6,6 @@ import QRCode from 'react-native-qrcode-svg';
 import BackgroundTimer from 'react-native-background-timer';
 import { useNavigation } from '@react-navigation/native';
 //import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import Toast from 'react-native-toast-message';
 
 
 export default function ListeningScreen({ route }) {
@@ -15,11 +14,6 @@ export default function ListeningScreen({ route }) {
   const [revealKey, setRevealKey] = useState(false);
   const [revealKey1, setRevealKey1] = useState(false);
   const [ServerAlive,SetServerAlive]  = useState(false)
-  Toast.show({
-    type: 'success',
-    text1: 'Listening At:',
-    text2: `{serverUrl}`
-  });
   const serverAliveChecker = async () => {
     const tunnel = await require("./tunnel")
     let t = await tunnel.isAlive(serverUrl)

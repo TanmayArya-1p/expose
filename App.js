@@ -16,7 +16,6 @@ async function enableLogging() {
 }
 
 export default function App() {
-
   enableLogging()
   return (
     <NavigationContainer>
