@@ -11,6 +11,9 @@ async function createsessiononcss(navigation,serverUrl,masterKey,sessionKey) {
     );
     return 0
   }
+  if(serverUrl[serverUrl.length - 1] == '/'){
+    serverUrl = serverUrl.slice(0, -1)
+  }
   const tunnel = await require("./tunnel")
   tunnel.isAlive(serverUrl).then(srvstat => {
     if(!srvstat){

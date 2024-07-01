@@ -23,6 +23,9 @@ async function transition(navigation,serverUrl,sessionId,sessionKey,masterKey) {
   //   );
   //   return 0
   // }
+  if(serverUrl[serverUrl.length - 1] == '/'){
+    serverUrl = serverUrl.slice(0, -1)
+  }
   const IntId = await tunnel.startListenerThread(serverUrl,sessionKey,sessionId,masterKey)
   navigation.navigate('Listening', { sessionKey, sessionId, masterKey, serverUrl, IntId })
   return 1
@@ -142,7 +145,7 @@ export default function JoinSessionScreen({ navigation }) {
                       isActive={true}
                     />
             )}
-      <TouchableOpacity className="mx-2 opacity-40" style={styles.container1} onPress={toggleElement}>
+      <TouchableOpacity className="mx-2 opacity-70" style={styles.container1} onPress={toggleElement}>
           <Text style={styles.button}>{qrcodebuttontext}</Text>
       </TouchableOpacity>
     </View>
