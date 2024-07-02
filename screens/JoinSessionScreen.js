@@ -30,7 +30,7 @@ async function transition(navigation,serverUrl,sessionId,sessionKey,masterKey) {
   navigation.navigate('Listening', { sessionKey, sessionId, masterKey, serverUrl, IntId })
   return 1
 }
-var qrcodebuttontext = "QR Code Scanner"
+var qrcodebuttontext = "Toggle QR Code Scanner"
 export default function JoinSessionScreen({ navigation }) {
 
 
@@ -53,13 +53,6 @@ export default function JoinSessionScreen({ navigation }) {
 
   const toggleElement = () => {
     setIsVisible(!isVisible);
-    console.log(qrcodebuttontext)
-    if(qrcodebuttontext == "QR Code Scanner"){
-      qrcodebuttontext = "Close QR Code Scanner"
-    }
-    else {
-      qrcodebuttontext = "QR Code Scanner"
-    }
     console.log(qrcodebuttontext)
   };
 
