@@ -1,8 +1,10 @@
 // screens/JoinSessionScreen.js
 import React, { useState , useEffect } from 'react';
-import { View, TextInput, Button, StyleSheet,useWindowDimensions,Text,TouchableOpacity, ScrollView , Alert} from 'react-native';
+import { View, TextInput, Button, StyleSheet,useWindowDimensions,Text,TouchableOpacity, ScrollView , Alert,PermissionsAndroid} from 'react-native';
 import ConcatStringDropdown from './ConcatStringDropdown';
-import { ReactNativeScannerView } from "@pushpendersingh/react-native-scanner";
+//import { ReactNativeScannerView } from "@pushpendersingh/react-native-scanner";
+import {Camera, Code, useCameraDevice,useCodeScanner} from 'react-native-vision-camera'
+
 
 
 async function transition(navigation,serverUrl,sessionId,sessionKey,masterKey) {
@@ -22,17 +24,22 @@ async function transition(navigation,serverUrl,sessionId,sessionKey,masterKey) {
   //   );
   //   return 0
   // }
+  if(serverUrl[serverUrl.length - 1] == '/'){
+    serverUrl = serverUrl.slice(0, -1)
+  }
   const IntId = await tunnel.startListenerThread(serverUrl,sessionKey,sessionId,masterKey)
   navigation.navigate('Listening', { sessionKey, sessionId, masterKey, serverUrl, IntId })
   return 1
 }
-var qrcodebuttontext = "QR Code Scanner"
+var qrcodebuttontext = "Toggle QR Code Scanner"
 export default function JoinSessionScreen({ navigation }) {
 
 
 
   const [isVisible, setIsVisible] = useState(false);
-  
+  const [hasPermission, setHasPermission] = React.useState(null);
+  const device = useCameraDevice("back")
+
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', (e) => {
@@ -43,18 +50,37 @@ export default function JoinSessionScreen({ navigation }) {
     return unsubscribe
   },[navigation]);
 
-
+  async function requestCameraPermissions() 
+  {
+    try {
+      const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA)
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        setHasPermission(true)
+        return true
+      } else {
+        setHasPermission(false)
+        return false
+      }
+    } catch (err) {
+      console.log("PERMS REQ FAILED",err)
+      setHasPermission(false)
+      return false
+    }
+  }
+  
 
   const toggleElement = () => {
-    setIsVisible(!isVisible);
-    console.log(qrcodebuttontext)
-    if(qrcodebuttontext == "QR Code Scanner"){
-      qrcodebuttontext = "Hide QR Code Scanner"
+    if(!hasPermission) {
+      const resp = requestCameraPermissions()
+      if(resp){
+        setIsVisible(!isVisible);
+        console.log(qrcodebuttontext)
+      }
     }
     else {
-      qrcodebuttontext = "QR Code Scanner"
+      setIsVisible(!isVisible);
+      console.log(qrcodebuttontext)
     }
-    console.log(qrcodebuttontext)
   };
 
 
@@ -77,7 +103,18 @@ export default function JoinSessionScreen({ navigation }) {
     }
 
   }
-  
+  const codeScanner = useCodeScanner({
+    codeTypes: ['qr', 'ean-13'],
+    onCodeScanned: (codes: Code[]) => {
+      console.log(codes[0].value);
+      if(codes[0].value != null){
+        if(codes[0].value.slice(0,6) == "exp:||"){
+          toggleElement()
+          setConcatString(codes[0].value.slice(6));
+        }
+      }
+    },
+  });
   
   //serverUrl = 'http://16.171.177.71:3000'
   //sessionId = "75403d0baa70"
@@ -120,27 +157,17 @@ export default function JoinSessionScreen({ navigation }) {
       <TouchableOpacity  style={styles.container1} onPress={() => transition(navigation,serverUrl,sessionId,sessionKey,masterKey)}>
           <Text style={styles.button}>Join Session</Text>
       </TouchableOpacity>
-
-      <TouchableOpacity className="mx-2" style={styles.container1} onPress={toggleElement}>
+            {isVisible && (
+                      <Camera
+                      style={StyleSheet.absoluteFill}
+                      codeScanner={codeScanner}
+                      device={device}
+                      isActive={true}
+                    />
+            )}
+      <TouchableOpacity className="mx-2 opacity-70" style={styles.container1} onPress={toggleElement}>
           <Text style={styles.button}>{qrcodebuttontext}</Text>
       </TouchableOpacity>
-            {isVisible && (
-                <View style={styles.revealedElement}>
-                          <ReactNativeScannerView
-                          style={{height,width}}
-                          onQrScanned={(value: any) => {
-                            console.log(value.nativeEvent.value);
-                            if(value.nativeEvent.value != null){
-                              if(value.nativeEvent.value.slice(0,6) == "exp:||"){
-                                toggleElement()
-                                setConcatString(value.nativeEvent.value.slice(6));
-                              }
-                            }
-                            }}
-                          />
-                </View>
-            )}
-
     </View>
       
 
@@ -212,7 +239,7 @@ const styles = StyleSheet.create({
     color: "rgba(0,0,0,1)",
     fontSize: 17,
     textAlign: "center",
-    fontFamily : "Roboto",
+    fontFamily : "Rubik-Regular",
     padding: 4,
   },
   header:{

@@ -20,9 +20,7 @@ async function isAlive(serverUrl) {
             if (response.status !== 200) {
                 return false;
             }
-            console.log("PASSED 200 CHECKPOINT")
             return response.json().then(data => {
-                console.log(JSON.stringify(data))
                 return JSON.stringify(data) === fixedString;
             }).catch(() => {
                 return false;
@@ -71,9 +69,8 @@ const appendImg = async (serverUrl, sid,skey,mkey , imghash, rid) => {
         body: JSON.stringify({"data" : [imghash,rid]})
         };
     req = await fetch(`${serverUrl}/session/${sid}/appendImg?session_key=${skey}&master_key=${mkey}`,rq)
-    console.log(req)
     r= await req.json()
-    console.log(r)
+    console.log("OUTPUT OF APPEND IMG RQ: ",r)
     return r
 }
 
@@ -83,9 +80,7 @@ const sessionCreate = async (serverUrl,mkey, skey) => {
         method: 'POST',
         headers: {'Content-Type': 'application/json'}
         };
-    console.log("REQUESTING")
     req = await fetch(`${serverUrl}/sessionCreate?master_key=${mkey}&session_key=${skey}`,rq)
-    console.log("REQUESted")
     resp = await req.json()
     return resp.session_id
 }   
@@ -175,7 +170,7 @@ const fetchFile = async (serverUrl,authKey,masterKey,routeId) => {
 };
 
 const uploadFile = async (serverUrl,photo,authkey,mkey) => {
-    console.log(photo)
+    console.log("PHOTO OBJECT TO BE UPLOADED: ",photo)
     const granted = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
         {
@@ -197,13 +192,11 @@ const uploadFile = async (serverUrl,photo,authkey,mkey) => {
         });
     
     fullurl = `${serverUrl}/upload?authkey=${authkey}&master_key=${mkey}`
-    console.log(fullurl)
     const response =  await fetch(fullurl, {
     method: 'POST',
     body: data,
     });
     const r= await response.json()
-    console.log(r);
     console.log("Uploaded Image")
     return r;
 }
@@ -245,7 +238,7 @@ const latestHashes = async (sessionstart) => {
 async function startListenerThread(serverUrl,skey,sid,mkey) {
     session_start = Date.now()
     console.log(`LISTENER STARTED : ${session_start}`)
-    const IntId = await BackgroundTimer.setInterval(() => {photoLibListener(serverUrl,skey,sid,mkey , session_start)}, 10000);
+    const IntId = await BackgroundTimer.setInterval(() => {photoLibListener(serverUrl,skey,sid,mkey , session_start)}, 30000);
     return IntId
 }
 
@@ -286,8 +279,8 @@ const photoLibListener = async (serverUrl,skey,sid,mkey,sessionstart) => {
         console.log(prevImgList,currentImgList)
         for(let i = 0;i<currentImgList.length; i++){
             if(!(currentImgList[i] in prevImgList)){
-                console.log(`Uploading Image ${currentImgList[i]} , ${i+1}/${currentImgList.length}`)
                 if(!(membership(currentImgList[i],uploaded))){
+                    console.log(`Uploading Image ${currentImgList[i]} , ${i+1}/${currentImgList.length}`)
                     resp = await uploadFile(serverUrl,photoObjects[i],skey,mkey)
                     uploaded.push(currentImgList[i])
                     console.log(`uploaded : ${uploaded.length}`)
@@ -297,10 +290,11 @@ const photoLibListener = async (serverUrl,skey,sid,mkey,sessionstart) => {
             }
         }
     }
+    [prevImgList,photoObjects] = await latestHashes(sessionstart)
     serverImgList = await sessionFetch(serverUrl,sid,skey,mkey)
     console.log("SERVER IMG LIST",serverImgList)
     if(!areArraysEqual(serverImgList.map((i) => i[0]),currentImgList)){
-        console.log("SERVER RECORDS DONT MATCH")
+        console.log("SERVER RECORDS DONT MATCH" , serverImgList, currentImgList)
         for(var i=0;i<serverImgList.length;i++) {
             if(!membership(serverImgList[i][0],currentImgList)) {
                 console.log(`DOWNLOADING FROM RID ${serverImgList[i][1]}`)
@@ -309,25 +303,6 @@ const photoLibListener = async (serverUrl,skey,sid,mkey,sessionstart) => {
             
         }
     }
-    
-    // r = sessionFetch(serverUrl,sid,skey,mkey)
-    // if(r!= 0) {
-    //     console.log(r)
-    //     localHashCopy = latestHashes(session_start)
-    //     for(var i=0;i<r.length;i++) {
-    //         if(!(r[i][0] in localHashCopy)) {
-    //             console.log(`MISSING IMAGE ${r[i]}`)
-    //             if(fetchFile(serverUrl,skey,mkey) != 0) {
-    //                 console.log("File Downloaded")
-    //             }
-
-    //         }
-
-    // }
-
-    //prevImgList=currentImgList
-    [prevImgList,photoObjects] = await latestHashes(sessionstart)
-
 }
 
 

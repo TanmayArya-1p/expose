@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "AwesomeProj.app"
-               BlueprintName = "AwesomeProj"
-               ReferencedContainer = "container:AwesomeProj.xcodeproj">
+               BuildableName = "expose.app"
+               BlueprintName = "expose"
+               ReferencedContainer = "container:expose.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "AwesomeProjTests.xctest"
-               BlueprintName = "AwesomeProjTests"
-               ReferencedContainer = "container:AwesomeProj.xcodeproj">
+               BuildableName = "exposeTests.xctest"
+               BlueprintName = "exposeTests"
+               ReferencedContainer = "container:expose.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "AwesomeProj.app"
-            BlueprintName = "AwesomeProj"
-            ReferencedContainer = "container:AwesomeProj.xcodeproj">
+            BuildableName = "expose.app"
+            BlueprintName = "expose"
+            ReferencedContainer = "container:expose.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "AwesomeProj.app"
-            BlueprintName = "AwesomeProj"
-            ReferencedContainer = "container:AwesomeProj.xcodeproj">
+            BuildableName = "expose.app"
+            BlueprintName = "expose"
+            ReferencedContainer = "container:expose.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

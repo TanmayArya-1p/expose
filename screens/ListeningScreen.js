@@ -5,9 +5,7 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import QRCode from 'react-native-qrcode-svg';
 import BackgroundTimer from 'react-native-background-timer';
 import { useNavigation } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import Toast from 'react-native-toast-message';
-
+//import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 
 export default function ListeningScreen({ route }) {
@@ -16,17 +14,12 @@ export default function ListeningScreen({ route }) {
   const [revealKey, setRevealKey] = useState(false);
   const [revealKey1, setRevealKey1] = useState(false);
   const [ServerAlive,SetServerAlive]  = useState(false)
-  Toast.show({
-    type: 'success',
-    text1: 'Listening At:',
-    text2: `{serverUrl}`
-  });
   const serverAliveChecker = async () => {
     const tunnel = await require("./tunnel")
     let t = await tunnel.isAlive(serverUrl)
     SetServerAlive(t)
   }
-  let PingingSIID = setInterval(serverAliveChecker,10000)
+  let PingingSIID = setInterval(serverAliveChecker,25000)
   const copyToClipboard = (text) => {
     Clipboard.setString(text)
   };
@@ -82,13 +75,15 @@ export default function ListeningScreen({ route }) {
       <TouchableOpacity onPress={() => setRevealKey(!revealKey)}>
         <Text style={styles.texty}>Session Key: {revealKey ? `${sessionKey} (Tap to Hide)` : '******  (Tap to Reveal)'}</Text>
       </TouchableOpacity>
-      <View style={styles.concatbox} className = "mt-10">
+      <View style={styles.concatbox} className = "mt-7">
         <Text className="mb-2" style={styles.texty2}>Concat String</Text>
         <View className="flex-row">
-          <Text style={styles.textInput} className="">{`${masterKey}|${serverUrl}|${sessionId}|${sessionKey}`.substring(0,30)+`...`}</Text>
-          <TouchableOpacity className="mx-2" style = {styles.container1} onPress={() => copyToClipboard(`${masterKey}|${serverUrl}|${sessionId}|${sessionKey}`)}>
-            <Icon name="content-copy" size={24} color="black" style={styles.icon} />
+          <TouchableOpacity className="w-auto" onPress={() => copyToClipboard(`${masterKey}|${serverUrl}|${sessionId}|${sessionKey}`) }>
+          <Text style={styles.textInput} className="w-auto">{`${masterKey}|${serverUrl}|${sessionId}|${sessionKey}`.substring(0,10)+`...(Tap to Copy)`}</Text>
           </TouchableOpacity>
+          {/* <TouchableOpacity className="mx-2" style = {styles.container1} onPress={() => copyToClipboard(`${masterKey}|${serverUrl}|${sessionId}|${sessionKey}`)}>
+            <Icon name="content-copy" size={24} color="black" style={styles.icon} />
+          </TouchableOpacity> */}
         </View>
         {/* <View style={styles.concatbox1} className="justify-center">
           <TouchableOpacity className="mt-10" style = {styles.container1} onPress={() => copyToClipboard(`${masterKey}|${serverUrl}|${sessionId}|${sessionKey}`)}>
@@ -99,19 +94,19 @@ export default function ListeningScreen({ route }) {
           </TouchableOpacity>
         </View> */}
       </View>
-    <View style={styles.concatbox}>
+    <View style={styles.concatbox} className="mt-4">
       <View style={styles.qrCodeContainer} className="mb-5">
         {`${masterKey}|${serverUrl}|${sessionId}|${sessionKey}` ? <QRCode value={`exp:||${masterKey}|${serverUrl}|${sessionId}|${sessionKey}`} size={200} logo={logoFromFile} /> : null}
       </View>
     </View>
-      <Text className="">Go Back to End Listener</Text>
+      <Text style={styles.texty3}>Go Back to End Listener</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   texty: {
-    fontFamily: "Rubik-Light",
+    fontFamily: "Rubik-Regular",
     fontSize: 20,
     textAlign: 'center',
   },
@@ -124,6 +119,12 @@ const styles = StyleSheet.create({
     texty2: {
     fontFamily: "Rubik-Black",
     fontSize: 18,
+    textAlign: 'center',
+    justifyContent: 'center',
+  },
+  texty3: {
+    fontFamily: "Rubik-Black",
+    fontSize: 15,
     textAlign: 'center',
     justifyContent: 'center',
   },
@@ -196,18 +197,19 @@ const styles = StyleSheet.create({
     borderColor: 'gray',
     borderWidth: 1,
     marginBottom: 8,
-    width:"75%",
-    paddingHorizontal: 2,
+    width:"100%",
+    paddingHorizontal: 10,
     leftMargin:2,
     borderRadius:3,
     fontSize:15,
-    justifyContent:"center"
+    justifyContent:"center",
+    textAlign: "center"
   },
   button: {
     color: "rgba(0,0,0,1)",
     fontSize: 17,
     textAlign: "center",
-    fontFamily : "Roboto",
+    fontFamily : "Rubik-Regular",
     padding: 2,
   },
   header:{

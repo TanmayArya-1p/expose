@@ -11,6 +11,9 @@ async function createsessiononcss(navigation,serverUrl,masterKey,sessionKey) {
     );
     return 0
   }
+  if(serverUrl[serverUrl.length - 1] == '/'){
+    serverUrl = serverUrl.slice(0, -1)
+  }
   const tunnel = await require("./tunnel")
   tunnel.isAlive(serverUrl).then(srvstat => {
     if(!srvstat){
@@ -34,7 +37,7 @@ export default function CreateSessionScreen({ navigation }) {
   const [sessionKey, setSessionKey] = useState('');
   const [masterKey, setMasterKey] = useState('');
   var [serverUrl, setServerUrl] = useState('');
-  //serverUrl = "http://16.171.161.157:3000"
+  //serverUrl = "http://192.168.0.113:3000"
   return (
     <View style={styles.container} className="flex-1 bg-white">
       <Text style={styles.header}>Create Session</Text>
@@ -84,7 +87,7 @@ const styles = StyleSheet.create({
     color: "rgba(0,0,0,1)",
     fontSize: 17,
     textAlign: "center",
-    fontFamily : "Roboto",
+    fontFamily : "Rubik-Regular",
     padding: 4,
   },
   header:{
