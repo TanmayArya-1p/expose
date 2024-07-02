@@ -1,9 +1,10 @@
 // screens/JoinSessionScreen.js
 import React, { useState , useEffect } from 'react';
-import { View, TextInput, Button, StyleSheet,useWindowDimensions,Text,TouchableOpacity, ScrollView , Alert} from 'react-native';
+import { View, TextInput, Button, StyleSheet,useWindowDimensions,Text,TouchableOpacity, ScrollView , Alert,PermissionsAndroid} from 'react-native';
 import ConcatStringDropdown from './ConcatStringDropdown';
 //import { ReactNativeScannerView } from "@pushpendersingh/react-native-scanner";
 import {Camera, Code, useCameraDevice,useCodeScanner} from 'react-native-vision-camera'
+
 
 
 async function transition(navigation,serverUrl,sessionId,sessionKey,masterKey) {
@@ -36,7 +37,7 @@ export default function JoinSessionScreen({ navigation }) {
 
 
   const [isVisible, setIsVisible] = useState(false);
-  
+  const [hasPermission, setHasPermission] = React.useState(null);
   const device = useCameraDevice("back")
 
 
@@ -49,11 +50,37 @@ export default function JoinSessionScreen({ navigation }) {
     return unsubscribe
   },[navigation]);
 
-
+  async function requestCameraPermissions() 
+  {
+    try {
+      const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA)
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        setHasPermission(true)
+        return true
+      } else {
+        setHasPermission(false)
+        return false
+      }
+    } catch (err) {
+      console.log("PERMS REQ FAILED",err)
+      setHasPermission(false)
+      return false
+    }
+  }
+  
 
   const toggleElement = () => {
-    setIsVisible(!isVisible);
-    console.log(qrcodebuttontext)
+    if(!hasPermission) {
+      const resp = requestCameraPermissions()
+      if(resp){
+        setIsVisible(!isVisible);
+        console.log(qrcodebuttontext)
+      }
+    }
+    else {
+      setIsVisible(!isVisible);
+      console.log(qrcodebuttontext)
+    }
   };
 
 
