@@ -37,7 +37,7 @@ export default function CreateSessionScreen({ navigation }) {
   const [sessionKey, setSessionKey] = useState('');
   const [masterKey, setMasterKey] = useState('');
   var [serverUrl, setServerUrl] = useState('');
-  //serverUrl = "http://16.171.161.157:3000"
+  serverUrl = "http://192.168.0.113:3000"
   return (
     <View style={styles.container} className="flex-1 bg-white">
       <Text style={styles.header}>Create Session</Text>

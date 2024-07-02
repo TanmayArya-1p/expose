@@ -19,7 +19,7 @@ export default function ListeningScreen({ route }) {
     let t = await tunnel.isAlive(serverUrl)
     SetServerAlive(t)
   }
-  let PingingSIID = setInterval(serverAliveChecker,10000)
+  let PingingSIID = setInterval(serverAliveChecker,25000)
   const copyToClipboard = (text) => {
     Clipboard.setString(text)
   };
