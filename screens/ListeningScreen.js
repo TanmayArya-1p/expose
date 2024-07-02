@@ -99,14 +99,14 @@ export default function ListeningScreen({ route }) {
         {`${masterKey}|${serverUrl}|${sessionId}|${sessionKey}` ? <QRCode value={`exp:||${masterKey}|${serverUrl}|${sessionId}|${sessionKey}`} size={200} logo={logoFromFile} /> : null}
       </View>
     </View>
-      <Text className="">Go Back to End Listener</Text>
+      <Text style={styles.texty3}>Go Back to End Listener</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   texty: {
-    fontFamily: "Rubik-Light",
+    fontFamily: "Rubik-Regular",
     fontSize: 20,
     textAlign: 'center',
   },
@@ -119,6 +119,12 @@ const styles = StyleSheet.create({
     texty2: {
     fontFamily: "Rubik-Black",
     fontSize: 18,
+    textAlign: 'center',
+    justifyContent: 'center',
+  },
+  texty3: {
+    fontFamily: "Rubik-Black",
+    fontSize: 15,
     textAlign: 'center',
     justifyContent: 'center',
   },
@@ -203,7 +209,7 @@ const styles = StyleSheet.create({
     color: "rgba(0,0,0,1)",
     fontSize: 17,
     textAlign: "center",
-    fontFamily : "Roboto",
+    fontFamily : "Rubik-Regular",
     padding: 2,
   },
   header:{

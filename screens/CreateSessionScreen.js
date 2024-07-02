@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     color: "rgba(0,0,0,1)",
     fontSize: 17,
     textAlign: "center",
-    fontFamily : "Roboto",
+    fontFamily : "Rubik-Regular",
     padding: 4,
   },
   header:{
