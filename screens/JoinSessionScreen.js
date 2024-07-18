@@ -15,7 +15,6 @@ async function transition(navigation,serverUrl,sessionId,sessionKey,masterKey) {
     );
     return 0
   }
-  console.log('Transitioning')
   const tunnel = await require("./tunnel")
   // sesses= await tunnel.fetchSessions()
   // if(!(sessionId in sesses)){

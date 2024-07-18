@@ -1,11 +1,13 @@
 // screens/HomeScreen.js
-import React, { useEffect } from 'react';
+import React, { useEffect , useState } from 'react';
 import { View, Button, StyleSheet, TouchableOpacity, Text, Linking, Image , ActivityIndicator } from 'react-native';
 import { CameraRoll } from '@react-native-camera-roll/camera-roll';
 import RNFS from 'react-native-fs';
 import { NativeWindStyleSheet } from 'nativewind';
 //import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { PermissionsAndroid } from 'react-native';
+import Modal from "react-native-modal";
+import Svg, { Path } from "react-native-svg"
 
 
 async function dealWithPerms() {
@@ -21,6 +23,10 @@ async function dealWithPerms() {
 export default function HomeScreen({ navigation }) {
   const backgroundStyle = "text-black dark:text-white"
   const [hasPermission, setHasPermission] = React.useState(null);
+
+  const [settingsOpen , setSettingsOpen] = useState(false)
+
+
   useEffect(() => {
     const fetchPermissions = async () => {
       const result = await dealWithPerms();
@@ -54,7 +60,7 @@ export default function HomeScreen({ navigation }) {
     );
   }
   return (
-    <View className="flex-1">
+    <View className="flex-1 bg-white w-full">
     <View className="flex-1 justify-center items-center bg-white">
       <View className="flex-row justify-center items-center bg-white w-3/4">
         <Text style={styles.header}>
@@ -84,18 +90,29 @@ export default function HomeScreen({ navigation }) {
     </View>
 
     <View className="bg-white flex-row align-left items-end justify-end">
-      <TouchableOpacity style = {styles.container1} onPress={() => Linking.openURL("https://github.com/TanmayArya-1p/expose")}>
+      <TouchableOpacity className="border-1 rounded-xl bg-white shadow-2xl m-2 w-12 h-12" style = {styles.container} onPress={() => setSettingsOpen(true)}>
         <Image
         style={styles.tinyLogo}
         source={{
-          uri: 'https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png',
+          uri: 'https://cdn-icons-png.flaticon.com/512/3019/3019014.png ',
         }}
         />
       </TouchableOpacity>
     </View>
+    <Modal isVisible={settingsOpen} className="flex-1 ml-1" hasBackdrop={false} onBackButtonPress={()=>setSettingsOpen(false)} onBackdropPress={()=>setSettingsOpen(false)}>
+      <View className = "flex-col border rounded-xl bg-white shadow-inner m-2 w-[100%] h-[70%] align-middle justify-center border-slate-200 mr-10"  style = {styles.modal}>
+        <Text style={styles.header2}>Settings</Text>
+
+        <Button title="Hide modal" onPress={() => setSettingsOpen(false)} />
+      </View>
+    </Modal>
     </View>
   );
 }
+
+
+
+
 
 const styles = StyleSheet.create({
   container: {
@@ -133,8 +150,8 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   header2:{
-    fontFamily: "Rubik-Regular",
-    fontSize: 20,
+    fontFamily: "Rubik-Black",
+    fontSize: 25,
     textAlign: "center",
     color: "rgba(0,0,0,1)",
     padding: 4,
@@ -163,6 +180,24 @@ const styles = StyleSheet.create({
     shadowRadius: 0,
     overflow: "visible",
   },
+  modal: {
+    backgroundColor: "rgba(255,255,255,1)",
+    justifyContent: "center",
+    borderRadius: 3,
+    paddingLeft: 16,
+    paddingRight: 16,
+    borderWidth: 1,
+    borderColor: "#e3e3e3",
+    shadowColor: "rgba(179,179,179,1)",
+    shadowOffset: {
+      width: 3,
+      height: 3
+    },
+    elevation: 5,
+    shadowOpacity: 0.82,
+    shadowRadius: 0,
+    overflow: "visible"
+  }
 });
 
 NativeWindStyleSheet.create({
