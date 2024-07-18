@@ -7,15 +7,48 @@ import {
 } from 'recoil';
 
 import {generateKeyPair , signMessage, verifyMessage} from './cryptography'
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const motherServerAtom = atom({
     key: 'motherServerAtom',
-    default: '',
+    default: selector({
+        key : "motherServerAtomSelector",
+        get: async ({get}) => {
+            let temp =  await AsyncStorage.getItem('MServerURL')
+            if(!temp) {
+                return ''
+            }
+            return temp
+        }
+    })
 })
 
 const relayServerAtom = atom({
     key: 'relayServerAtom',
-    default: '',
+    default: selector({
+        key : "relayServerAtomSelector",
+        get: async ({get}) => {
+            let temp =  await AsyncStorage.getItem('RServerURL')
+            if(!temp) {
+                return ''
+            }
+            return temp
+        }
+    })
+})
+
+const relayServerKeyAtom = atom({
+    key:'relayServerKeyAtom',
+    default: selector({
+        key : "relayServerKeyAtomSelector",
+        get: async ({get}) => {
+            let temp = await AsyncStorage.getItem('RServerKey')
+            if(!temp) {
+                return ''
+            }
+            return temp
+        }
+    })
 })
 
 const sessionIDAtom = atom({
@@ -35,6 +68,20 @@ const keyPairAtom = selector({
     }
 })
 
+const ThemeAtom = atom({
+    key: 'ThemeAtom',
+    default: selector({
+        key : "ThemeAtomSelector",
+        get: async ({get}) => {
+            let temp = await AsyncStorage.getItem('Theme')
+            if(!temp) {
+                return 'light'
+            }
+            return  temp
+        }
+    })
+})
+
 const authblobSelector = selector({
     key: 'authblobSelector',
     get: async ({get}) => {
@@ -45,3 +92,5 @@ const authblobSelector = selector({
         return authblob
     }
 })
+
+module.exports = {authblobSelector , ThemeAtom , keyPairAtom , userIDAtom , sessionIDAtom , relayServerAtom , motherServerAtom, relayServerKeyAtom}
