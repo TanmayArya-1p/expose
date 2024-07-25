@@ -1,4 +1,4 @@
-import axios from 'axios';
+const axios = require('axios');
 import RNFS from 'react-native-fs';
 import base64 from 'base64-js';
 import {
@@ -17,94 +17,31 @@ function fixURL(url) {
     return url
 }
 
-
-async function isAlive(serverUrl , key) {
-    let fixedString = '{"message":"Key verified"}'
-    const timeoutPromise = new Promise((resolve) => {
-        setTimeout(() => resolve(false), 2000);
-    });
-    const fetchPromise = fetch(fixURL(serverUrl)+`/?master_key=${key}`)
-        .then(response => {
-            if (response.status !== 200) {
-                return false;
-            }
-            return response.json().then(data => {
-                return JSON.stringify(data) === fixedString;
-            }).catch(() => {
-                return false;
-            });
+async function isAlive(url,key) {
+    let TIMEOUT = 2000;
+    try {
+        const res = await axios.get(fixURL(url)+"/?master_key="+key, {
+            signal: AbortSignal.timeout(TIMEOUT)
         })
-        .catch(() => {
-            return false;
-        });
-    return Promise.race([fetchPromise, timeoutPromise]);
+        if(res.data.message === "Key Verified") {
+            return {
+                "serverStat" : true,
+                "keyStat" : true
+            }
+        }
+        return {
+            "serverStat" : true,
+            "keyStat" : false
+        }
+    }
+    catch (err) {
+        return {
+            "serverStat" : false,
+            "keyStat" : false
+        }
+    }
 }
 
-const fetchSessions = async (serverUrl,mkey) => {
-    rq = {
-        method: 'GET',
-        headers: {'Content-Type': 'application/json'},
-        };
-    req = await fetch(`${serverUrl}/sessions?master_key=${mkey}`,rq)
-    return req.json().sessions
-}
-
-//structure of session.json
-/*
-{
-sessionId1: {key:dfhdskfjd, image_hashes:[<imghas1,routeId>,<imghas2,routeId>,<imghas3,routeId>]},
-sessionId2: {key:dfhdskfjd, image_hashes:[<imghas1,routeId>,<imghas2,routeId>,<imghas3,routeId>]}
-}
-*/
-
-//takes sid and returns nested list of image_hashes
-const sessionFetch = async (serverUrl,sid,skey,mkey) => {
-    rq = {
-        method: 'GET',
-        headers: {'Content-Type': 'application/json'},
-        };
-    req = await fetch(`${serverUrl}/session/${sid}?session_key=${skey}&master_key=${mkey}`,rq)
-    r= await req.json()
-    return r
-}
-
-
-//takes image hash and appends to sessionid image_hashes. kicks first out.
-const appendImg = async (serverUrl, sid,skey,mkey , imghash, rid) => {
-    rq = {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({"data" : [imghash,rid]})
-        };
-    req = await fetch(`${serverUrl}/session/${sid}/appendImg?session_key=${skey}&master_key=${mkey}`,rq)
-    r= await req.json()
-    console.log("OUTPUT OF APPEND IMG RQ: ",r)
-    return r
-}
-
-//returns sessionId of new session
-const sessionCreate = async (serverUrl,mkey, skey) => {
-    rq = {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'}
-        };
-    req = await fetch(`${serverUrl}/sessionCreate?master_key=${mkey}&session_key=${skey}`,rq)
-    resp = await req.json()
-    return resp.session_id
-}   
-
-//opposite
-const sessionDestroy = async (serverUrl,mkey,sid,skey) => {
-    rq = {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'}
-        };
-    req = await fetch(`${serverUrl}/sessionDestroy?master_key=${mkey}&session_key=${skey}&session_id=${sid}`,rq)
-    return req.json().session_id
-
-}
-
-//returns {routeid1:true|false, routeid2: true|false} true means open false means holding file
 const fetchRoutes =async (serverUrl , mkey) => {
     rq = {
         method: 'GET',
@@ -114,7 +51,6 @@ const fetchRoutes =async (serverUrl , mkey) => {
     return req.json()
 }
 
-//writes into photo lib 
 const fetchFile = async (serverUrl,authKey,masterKey,routeId) => {
     const url = `${serverUrl}/fetch/${routeId}?authkey=${authKey}&master_key=${masterKey}&ses=1`;
     console.log(`Request URL: ${url}`);
@@ -209,112 +145,7 @@ const uploadFile = async (serverUrl,photo,authkey,mkey) => {
     return r;
 }
 
-
-// async function latestHashes(sessionstart) {
-//     let hashList= []
-//     let photos=[]
-// 	CameraRoll.getPhotos({first: 5, assetType: 'Photos',})
-// 		.then(data => data.edges.map(e => RNFS.stat(e.node.image.uri)
-// 		.then(stat=> { 
-// 			//console.log(stat)
-//             RNFS.hash(stat.originalFilepath, 'md5')
-// 		.then(hash=>hashList[0]=(hash)) })))
-//     console.log(hashList)
-//     return [hashList,photos]
-//}
-
-//return hashes cruptojs.md5 of latest 3 images in array. photos.edges object of latest 3 phots
-const latestHashes = async (sessionstart) => {
-    try {
-      const photos = await CameraRoll.getPhotos({
-        first: 3,
-        assetType: 'Photos',
-        fromTime: sessionstart
-      });
-        const latestPhotos = photos.edges.map(edge => edge.node.image.uri);
-        const computedHashes = await Promise.all(latestPhotos.map(async uri => {
-          const fileContents = await RNFS.readFile(uri, 'base64');
-          const hash = CryptoJS.MD5(CryptoJS.enc.Base64.parse(fileContents)).toString();
-          return hash;
-      }));
-      return [computedHashes,photos.edges]
-    } catch (error) {
-      console.log(error);
-    }
-};
-
-async function startListenerThread(serverUrl,skey,sid,mkey) {
-    session_start = Date.now()
-    console.log(`LISTENER STARTED : ${session_start}`)
-    const IntId = await BackgroundTimer.setInterval(() => {photoLibListener(serverUrl,skey,sid,mkey , session_start)}, 30000);
-    return IntId
-}
-
-function areArraysEqual(arr1, arr2) {
-    if (arr1.length!=arr2.length) {
-        return false
-    }
-    for (var i = 0; i < arr2.length; i++) {
-      var a = arr1[i];
-      var b = arr2[i];
-  
-      if (a != b) {
-        return false;
-      }
-    }
-  
-    return true;
-}
-
-function membership(search,l) {
-    for(let i =0 ; i<l.length; i++) {
-        let k = l[i]
-        if(search == k) {
-            return true
-        }
-    }
-    return false
-}
-
-var prevImgList = []
-var uploaded = []
-const photoLibListener = async (serverUrl,skey,sid,mkey,sessionstart) => {
-
-    
-    var [currentImgList, photoObjects] = await latestHashes(sessionstart)
-    console.log(!areArraysEqual(currentImgList,prevImgList))
-    if(!areArraysEqual(currentImgList,prevImgList)){
-        console.log(prevImgList,currentImgList)
-        for(let i = 0;i<currentImgList.length; i++){
-            if(!(currentImgList[i] in prevImgList)){
-                if(!(membership(currentImgList[i],uploaded))){
-                    console.log(`Uploading Image ${currentImgList[i]} , ${i+1}/${currentImgList.length}`)
-                    resp = await uploadFile(serverUrl,photoObjects[i],skey,mkey)
-                    uploaded.push(currentImgList[i])
-                    console.log(`uploaded : ${uploaded.length}`)
-                }
-                console.log(resp)
-                await appendImg(serverUrl,sid,skey,mkey,currentImgList[i],resp["route_id"])
-            }
-        }
-    }
-    [prevImgList,photoObjects] = await latestHashes(sessionstart)
-    serverImgList = await sessionFetch(serverUrl,sid,skey,mkey)
-    console.log("SERVER IMG LIST",serverImgList)
-    if(!areArraysEqual(serverImgList.map((i) => i[0]),currentImgList)){
-        console.log("SERVER RECORDS DONT MATCH" , serverImgList, currentImgList)
-        for(var i=0;i<serverImgList.length;i++) {
-            if(!membership(serverImgList[i][0],currentImgList)) {
-                console.log(`DOWNLOADING FROM RID ${serverImgList[i][1]}`)
-                await fetchFile(serverUrl,skey,mkey,serverImgList[i][1])
-            }
-            
-        }
-    }
-}
-
-
-module.exports = {uploadFile,fetchFile,fetchRoutes,fetchSessions,sessionDestroy,sessionCreate,appendImg,sessionFetch,isAlive,startListenerThread};
+module.exports = {uploadFile,fetchFile,fetchRoutes,isAlive};
 
 
 

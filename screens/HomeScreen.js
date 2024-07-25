@@ -10,12 +10,13 @@ import { PermissionsAndroid } from 'react-native';
 import Modal from "react-native-modal";
 import Svg, { Path } from "react-native-svg"
 import Icon from 'react-native-vector-icons/Ionicons'
-import { ThemeAtom , keyPairAtom , userIDAtom , sessionIDAtom , relayServerAtom , motherServerAtom, relayServerKeyAtom } from './atoms'
+import { ThemeAtom , keyPairAtom , userIDAtom , sessionIDAtom , relayServerAtom , motherServerAtom, relayServerKeyAtom , sessionPassAtom} from './atoms'
 import { useRecoilState, useRecoilValue, useRecoilValueLoadable } from 'recoil';
 import RNPasswordStrengthMeter from 'react-native-password-strength-meter';
+import Toast from 'react-native-simple-toast';
 
 const mserver = require("../tunnel/mserver");
-const rserver = require("../tunnel/relay");
+const relay = require("../tunnel/relay");
 
 
 
@@ -33,7 +34,7 @@ export default function HomeScreen({ navigation }) {
   const backgroundStyle = "text-black dark:text-white"
   const [hasPermission, setHasPermission] = React.useState(null);
 
-  const [sessionPass, setSessionPass] = React.useState("");
+  const [sessionPass, setSessionPass] = useRecoilState(sessionPassAtom)
 
   const [creating, SetCreating] = React.useState(false);
   const [joining, setJoining] = React.useState(false);
@@ -293,13 +294,22 @@ export default function HomeScreen({ navigation }) {
               let res = await mserver.isAlive(ServerUrl) 
               if (!res) {
                 console.log("INVALID SERVER URL: " + ServerUrl)
+                Toast.show('Invalid Server URL');
                 SetCreating(false)
                 return;
               }
               res = await relay.isAlive(RelayServerUrl , relayServerKey)
-              if(!res) {
+              console.log(res)
+              if(!res.serverStat) {
                 console.log("INVALID RELAY SERVER URL: " + RelayServerUrl)
-                SetCreating(false)
+                Toast.show('Invalid Relay Server URL');
+                setJoining(false)
+                return;
+              }
+              if(!res.keyStat) {
+                console.log("INVALID RELAY SERVER KEY: " + RelayServerUrl)
+                Toast.show('Invalid Relay Server Key');
+                setJoining(false)
                 return;
               }
               res = await mserver.createSession(ServerUrl , sessionPass, keypair.publicKey)
@@ -343,12 +353,21 @@ export default function HomeScreen({ navigation }) {
               let res = await mserver.isAlive(ServerUrl) 
               if (!res) {
                 console.log("INVALID SERVER URL: " + ServerUrl)
+                Toast.show('Invalid Server URL');
                 setJoining(false)
                 return;
               }
               res = await relay.isAlive(RelayServerUrl , relayServerKey)
-              if(!res) {
+              console.log(res)
+              if(!res.serverStat) {
                 console.log("INVALID RELAY SERVER URL: " + RelayServerUrl)
+                Toast.show('Invalid Relay Server URL');
+                setJoining(false)
+                return;
+              }
+              if(!res.keyStat) {
+                console.log("INVALID RELAY SERVER KEY: " + RelayServerUrl)
+                Toast.show('Invalid Relay Server Key');
                 setJoining(false)
                 return;
               }
@@ -356,6 +375,8 @@ export default function HomeScreen({ navigation }) {
               setUserID(res.userid)
               setSessionID(res.sessionid)
               setSessionPass(res.auth)
+              setRelayServerUrl(connectionString.split("||")[2])
+              setRelayServerKey(connectionString.split("||")[3])
               setJoining(false)
               navigate.navigate('Join Session')
               }}>
@@ -368,7 +389,6 @@ export default function HomeScreen({ navigation }) {
             
       </View>
     </Modal>
-
     </View>
   );
 }

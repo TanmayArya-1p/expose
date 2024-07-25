@@ -61,6 +61,12 @@ const userIDAtom = atom({
     default: '',
 })
 
+
+const sessionPassAtom = atom({
+    key:'sessionPassAtom',
+    default: '',
+})
+
 const keyPairAtom = selector({
     key: 'keyPairAtom',
     get: async ({get}) => {
@@ -95,4 +101,5 @@ const authblobSelector = selector({
     }
 })
 
-module.exports = {authblobSelector, ThemeAtom , keyPairAtom , userIDAtom , sessionIDAtom , relayServerAtom , motherServerAtom, relayServerKeyAtom}
+
+module.exports = {authblobSelector, ThemeAtom , keyPairAtom , userIDAtom , sessionIDAtom , relayServerAtom , motherServerAtom, relayServerKeyAtom,sessionPassAtom}
