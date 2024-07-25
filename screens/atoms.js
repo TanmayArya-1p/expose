@@ -64,7 +64,9 @@ const userIDAtom = atom({
 const keyPairAtom = selector({
     key: 'keyPairAtom',
     get: async ({get}) => {
-        return await generateKeyPair()
+        let r = await generateKeyPair()
+        console.log("KEY PAIR",r)
+        return r
     }
 })
 
@@ -93,4 +95,4 @@ const authblobSelector = selector({
     }
 })
 
-module.exports = {authblobSelector , ThemeAtom , keyPairAtom , userIDAtom , sessionIDAtom , relayServerAtom , motherServerAtom, relayServerKeyAtom}
+module.exports = {authblobSelector, ThemeAtom , keyPairAtom , userIDAtom , sessionIDAtom , relayServerAtom , motherServerAtom, relayServerKeyAtom}

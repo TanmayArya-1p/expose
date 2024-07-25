@@ -9,13 +9,21 @@ import { CameraRoll } from '@react-native-camera-roll/camera-roll';
 import CryptoJS from 'react-native-crypto-js';
 import BackgroundTimer from 'react-native-background-timer';
 
+function fixURL(url) {
+    if (url[url.length - 1] === '/') url = url.slice(0, -1);
+    if (!url.startsWith("http://")) {
+        url =  "http://" + url;
+    }
+    return url
+}
 
-async function isAlive(serverUrl) {
-    let fixedString = '{"message":"Relay Server is Alive"}'
+
+async function isAlive(serverUrl , key) {
+    let fixedString = '{"message":"Key verified"}'
     const timeoutPromise = new Promise((resolve) => {
         setTimeout(() => resolve(false), 2000);
     });
-    const fetchPromise = fetch(serverUrl)
+    const fetchPromise = fetch(fixURL(serverUrl)+`/?master_key=${key}`)
         .then(response => {
             if (response.status !== 200) {
                 return false;

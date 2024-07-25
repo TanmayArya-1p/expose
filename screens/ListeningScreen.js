@@ -8,7 +8,8 @@ import { useNavigation } from '@react-navigation/native';
 //import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 
-export default function ListeningScreen({ route }) {
+export default function ListeningScreen(props) {
+  const route = props.route
   const navigation = useNavigation();
   const { sessionKey, sessionId, masterKey, serverUrl , IntId} = route.params;
   const [revealKey, setRevealKey] = useState(false);

@@ -1,6 +1,6 @@
 // screens/HomeScreen.js
 import React, { useEffect , useState } from 'react';
-import { View, Button, StyleSheet, TouchableOpacity, Text, Linking, Image , ActivityIndicator,Switch,TextInput} from 'react-native';
+import { View, Button, StyleSheet, TouchableOpacity, Text, Linking, Image , ActivityIndicator,Switch,TextInput , KeyboardAvoidingView, ScrollView} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CameraRoll } from '@react-native-camera-roll/camera-roll';
 import RNFS from 'react-native-fs';
@@ -10,8 +10,12 @@ import { PermissionsAndroid } from 'react-native';
 import Modal from "react-native-modal";
 import Svg, { Path } from "react-native-svg"
 import Icon from 'react-native-vector-icons/Ionicons'
-import {authblobSelector , ThemeAtom , keyPairAtom , userIDAtom , sessionIDAtom , relayServerAtom , motherServerAtom, relayServerKeyAtom} from './atoms'
-import { useRecoilState } from 'recoil';
+import { ThemeAtom , keyPairAtom , userIDAtom , sessionIDAtom , relayServerAtom , motherServerAtom, relayServerKeyAtom } from './atoms'
+import { useRecoilState, useRecoilValue, useRecoilValueLoadable } from 'recoil';
+import RNPasswordStrengthMeter from 'react-native-password-strength-meter';
+
+const mserver = require("../tunnel/mserver");
+const rserver = require("../tunnel/relay");
 
 
 
@@ -29,14 +33,29 @@ export default function HomeScreen({ navigation }) {
   const backgroundStyle = "text-black dark:text-white"
   const [hasPermission, setHasPermission] = React.useState(null);
 
+  const [sessionPass, setSessionPass] = React.useState("");
+
+  const [creating, SetCreating] = React.useState(false);
+  const [joining, setJoining] = React.useState(false);
+  const [resetting, setResetting] = React.useState(false)
 
   const [settingsOpen , setSettingsOpen] = useState(false)
+  const [createSessionModelOpen, setCreateSessionModelOpen] = useState(false)
+  const [joinSessionModelOpen, setJoinSessionModelOpen] = useState(false)
+
+  const [userID , setUserID] = useRecoilState(userIDAtom)
+  const [sessionID , setSessionID] = useRecoilState(sessionIDAtom)
+
+  const [connectionString, setConnectionString] = useState("")
+
   const [ThemeAtomValue, setThemeAtomValue] = useRecoilState(ThemeAtom)
   const [isEnabled , setEnabled] = useState(ThemeAtomValue == "light" ? false : true);
 
   const [ServerUrl , setServerUrl] = useRecoilState(motherServerAtom)
   const [RelayServerUrl, setRelayServerUrl] = useRecoilState(relayServerAtom)
   const [relayServerKey, setRelayServerKey] = useRecoilState(relayServerKeyAtom)
+
+  const keypair = useRecoilValueLoadable(keyPairAtom)
 
   useEffect(() => {
     async function setter() {
@@ -103,19 +122,22 @@ export default function HomeScreen({ navigation }) {
     <View className="flex-1 bg-white w-full">
     <View className="flex-1 justify-center items-center bg-white">
       <View className="flex-row justify-center items-center bg-white w-3/4">
-        <Text style={styles.header}>
+          <Text style={styles.header}>
           Expose
-        </Text>
-        <Text className="justify-bottom">
-          v1.0
-        </Text>
+          </Text>
+          <Text className="justify-bottom">
+            v1.0
+          </Text>
       </View>
       {hasPermission ?
       <View className="flex-row justify-center items-center bg-white mt-40 w-3/4">
-        <TouchableOpacity disabled={!hasPermission} className="mx-2" style = {styles.container} onPress={() => navigation.navigate('Join Session')}>
+        <TouchableOpacity disabled={!hasPermission} className="mx-2" style = {styles.container} onPress={() => setJoinSessionModelOpen(true)}>
           <Text style={styles.button}>Join Session</Text>
         </TouchableOpacity>
-        <TouchableOpacity disabled={!hasPermission} className="mx-2" style = {styles.container} onPress={() => navigation.navigate('Create Session')}>
+        {/* <TouchableOpacity disabled={!hasPermission} className="mx-2" style = {styles.container} onPress={() => navigation.navigate('Create Session')}>
+          <Text style={styles.button}>Create Session</Text>
+        </TouchableOpacity> */}
+        <TouchableOpacity disabled={!hasPermission} className="mx-2" style = {styles.container} onPress={() => setCreateSessionModelOpen(true)}>
           <Text style={styles.button}>Create Session</Text>
         </TouchableOpacity>
       </View>
@@ -140,8 +162,7 @@ export default function HomeScreen({ navigation }) {
         <Icon name="settings" size={24}></Icon>
       </TouchableOpacity>
     </View>
-
-    <Modal isVisible={settingsOpen} className="flex-1 ml-1" backdropColor="transparent" onBackButtonPress={()=>setSettingsOpen(false)} onBackdropPress={()=>setSettingsOpen(false)}>
+    <Modal isVisible={settingsOpen} className="flex-1 ml-1" backdropColor="white" animationInTiming={200} backdropOpacity={1}>
       <View className = "flex-col border rounded-xl bg-white shadow-inner m-2 w-[100%] h-[75%] align-middle justify-center border-slate-200 mr-10"  style = {styles.modal}>
         <TouchableOpacity onPress = {() => setSettingsOpen(false)}>
           <Icon name="arrow-back-outline" size={24}></Icon>
@@ -201,7 +222,7 @@ export default function HomeScreen({ navigation }) {
 
           </View>
         </View>
-        <View className="flex-row justify-between m-2" style={styles.container}>
+        <View className="flex-row mb-1 p-2 justify-center align-middle" style={styles.container}>
           <View className="flex-row p-2">
             <Text style={styles.header3} className="">Theme</Text>
           </View>
@@ -230,18 +251,124 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.header3}>Storage Permissions : {hasPermission ? "✅" : "❌"}</Text>
         </View>
         <TouchableOpacity style ={styles.container} onPress={() => {
+          setResetting(true)
           fetch("https://raw.githubusercontent.com/TanmayArya-1p/expose-backend/main/default-config.json").then(r=> r.json().then(j => {
             setServerUrl(j.mserverurl)
             setRelayServerUrl(j.rserverurl)
             setRelayServerKey(j.rserverkey)
+            setTimeout(() => setResetting(false) , 700) 
           }))
-
         }}>
-          <Text style={styles.button}>Reset To Defaults</Text>
+          <View className="flex-row">
+            <Text style={styles.button}>Reset To Defaults</Text>
+            {resetting && <ActivityIndicator size="small" color="#0000ff" />}
+          </View>
+
         </TouchableOpacity>
 
       </View>
     </Modal>
+
+    <Modal isVisible={createSessionModelOpen} className="flex-1 ml-1" backdropColor="white" animationInTiming={200} backdropOpacity={1}>
+      <View className = "flex-col border rounded-xl bg-white shadow-inner m-2 w-[100%] h-[50%] align-middle justify-center border-slate-200 mr-10"  style = {styles.modal}>
+          <TouchableOpacity onPress = {() => setCreateSessionModelOpen(false)}>
+            <Icon name="arrow-back-outline" size={24}></Icon>
+          </TouchableOpacity>
+          <Text style={styles.header2}>Set a Password</Text>
+          <Text style={styles.button} className="">Users require this password to join the session</Text>
+            <RNPasswordStrengthMeter
+              inputStyle={styles.passinput}
+              containerWrapperStyle = {{borderColor : "#000000"}}
+              onChangeText={(a) => {
+                setSessionPass(a)
+              }}
+              value={sessionPass}
+              meterType="bar"
+              width={5}
+            />
+
+            <TouchableOpacity disabled={!hasPermission} className="mt-5" style = {styles.container} onPress={async () => {
+              SetCreating(true)
+              console.log(keypair)
+              let res = await mserver.isAlive(ServerUrl) 
+              if (!res) {
+                console.log("INVALID SERVER URL: " + ServerUrl)
+                SetCreating(false)
+                return;
+              }
+              res = await relay.isAlive(RelayServerUrl , relayServerKey)
+              if(!res) {
+                console.log("INVALID RELAY SERVER URL: " + RelayServerUrl)
+                SetCreating(false)
+                return;
+              }
+              res = await mserver.createSession(ServerUrl , sessionPass, keypair.publicKey)
+              setUserID(res.userid)
+              setSessionID(res.sessionid)
+              SetCreating(false)
+              navigate.navigate('Join Session')
+              }
+            }>
+              <View className="flex-row">
+                <Text style={styles.button}>Create</Text>
+                {creating && <ActivityIndicator size="small" color="#0000ff" /> }
+              </View>
+            </TouchableOpacity>
+
+
+
+            
+      </View>
+    </Modal>
+
+    <Modal isVisible={joinSessionModelOpen} className="flex-1 ml-1" backdropColor="white"  animationInTiming={200} backdropOpacity={1}>
+      <View className = "flex-col border rounded-xl bg-white shadow-inner m-2 w-[100%] h-[35%] align-middle justify-center border-slate-200 mr-10"  style = {styles.modal}>
+          <TouchableOpacity onPress = {() => setJoinSessionModelOpen(false)}>
+            <Icon name="arrow-back-outline" size={24}></Icon>
+          </TouchableOpacity>
+          <Text style={styles.header3}>Enter Connection String</Text>
+          <View className="flex-col mb-1 p-2 justify-center align-middle" style={styles.container1}>
+          <TextInput
+              style={styles.input}
+              placeholder=""
+              value={connectionString}
+              onChangeText={setConnectionString}
+              placeholderTextColor="#666"
+              className="w-[90%] h-10 align-middle"
+            />
+          </View>
+
+            <TouchableOpacity disabled={!hasPermission} className="m-2" style = {styles.container} onPress={async () => {
+              setJoining(true)
+              let res = await mserver.isAlive(ServerUrl) 
+              if (!res) {
+                console.log("INVALID SERVER URL: " + ServerUrl)
+                setJoining(false)
+                return;
+              }
+              res = await relay.isAlive(RelayServerUrl , relayServerKey)
+              if(!res) {
+                console.log("INVALID RELAY SERVER URL: " + RelayServerUrl)
+                setJoining(false)
+                return;
+              }
+              res = await mserver.joinSession(connectionString, ServerUrl, keypair.publicKey)
+              setUserID(res.userid)
+              setSessionID(res.sessionid)
+              setSessionPass(res.auth)
+              setJoining(false)
+              navigate.navigate('Join Session')
+              }}>
+              <View className="flex-row">
+                <Text style={styles.button}>Join</Text>
+                {joining && <ActivityIndicator size="small" color="#0000ff" />}
+                
+              </View>
+            </TouchableOpacity>
+            
+      </View>
+    </Modal>
+
     </View>
   );
 }
@@ -252,13 +379,19 @@ export default function HomeScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   input: {
-    borderColor: 'gray',
+    borderColor: '#e3e3e3',
     borderWidth: 1,
     marginBottom: 10,
     padding: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius:3
+    borderRadius:3,
+  
+  },
+  passinput: {
+    borderRadius:3,
+    color: "#000000",
+    borderColor: "#000000",
   },
   container: {
     backgroundColor: "rgba(255,255,255,1)",
@@ -277,6 +410,14 @@ const styles = StyleSheet.create({
     elevation: 5,
     shadowOpacity: 0.82,
     shadowRadius: 0,
+    overflow: "visible"
+  },
+  container1: {
+    backgroundColor: "rgba(255,255,255,1)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingLeft: 16,
+    paddingRight: 16,
     overflow: "visible"
   },
   button: {
