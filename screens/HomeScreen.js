@@ -290,8 +290,7 @@ export default function HomeScreen({ navigation }) {
 
             <TouchableOpacity disabled={!hasPermission} className="mt-5" style = {styles.container} onPress={async () => {
               SetCreating(true)
-              console.log(keypair)
-              let res = await mserver.isAlive(ServerUrl) 
+              let res = await mserver.isAlive(ServerUrl)
               if (!res) {
                 console.log("INVALID SERVER URL: " + ServerUrl)
                 Toast.show('Invalid Server URL');
@@ -303,20 +302,21 @@ export default function HomeScreen({ navigation }) {
               if(!res.serverStat) {
                 console.log("INVALID RELAY SERVER URL: " + RelayServerUrl)
                 Toast.show('Invalid Relay Server URL');
-                setJoining(false)
+                SetCreating(false)
                 return;
               }
               if(!res.keyStat) {
                 console.log("INVALID RELAY SERVER KEY: " + RelayServerUrl)
                 Toast.show('Invalid Relay Server Key');
-                setJoining(false)
+                SetCreating(false)
                 return;
               }
-              res = await mserver.createSession(ServerUrl , sessionPass, keypair.publicKey)
+              res = await mserver.createSession(ServerUrl , sessionPass, keypair.contents.publicKey)
+              console.log(res)
               setUserID(res.userid)
               setSessionID(res.sessionid)
               SetCreating(false)
-              navigate.navigate('Join Session')
+              navigation.navigate('Listening')
               }
             }>
               <View className="flex-row">
@@ -371,14 +371,21 @@ export default function HomeScreen({ navigation }) {
                 setJoining(false)
                 return;
               }
-              res = await mserver.joinSession(connectionString, ServerUrl, keypair.publicKey)
+              try {
+                res = await mserver.joinSession(connectionString, ServerUrl, keypair.contents.publicKey)
+
+              }
+              catch (error) {
+
+                console.log(error)
+              }
               setUserID(res.userid)
               setSessionID(res.sessionid)
               setSessionPass(res.auth)
-              setRelayServerUrl(connectionString.split("||")[2])
-              setRelayServerKey(connectionString.split("||")[3])
+              setRelayServerUrl(connectionString.split("||")[1])
+              setRelayServerKey(connectionString.split("||")[0])
               setJoining(false)
-              navigate.navigate('Join Session')
+              navigation.navigate('Listening')
               }}>
               <View className="flex-row">
                 <Text style={styles.button}>Join</Text>

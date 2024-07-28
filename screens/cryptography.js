@@ -9,13 +9,14 @@ async function generateKeyPair() {
 }
 
 async function verifyMessage(publicKeyString, message, signature) {
-  const isValid = await RSA.verify(signature, message, publicKeyString, RSA.SHA256withRSA);
+  const isValid = await RSA.verify(signature, message, publicKeyString);
   return isValid;
 }
 
 
 async function signMessage(privateKeyString, message) {
-  const signature = await RSA.sign(message, privateKeyString, RSA.SHA256withRSA);
+  //console.log("FAUHGF" , RSA.signWithAlgorithm)
+  const signature = await RSA.signWithAlgorithm(message, privateKeyString , 'SHA256withRSA');
   return signature;
 }
 

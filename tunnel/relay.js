@@ -1,4 +1,4 @@
-const axios = require('axios');
+import axios from 'axios';
 import RNFS from 'react-native-fs';
 import base64 from 'base64-js';
 import {
@@ -19,9 +19,12 @@ function fixURL(url) {
 
 async function isAlive(url,key) {
     let TIMEOUT = 2000;
+
     try {
+        const controller = new AbortController();
+        setTimeout(() => controller.abort(), TIMEOUT);
         const res = await axios.get(fixURL(url)+"/?master_key="+key, {
-            signal: AbortSignal.timeout(TIMEOUT)
+            signal: controller.signal
         })
         if(res.data.message === "Key Verified") {
             return {
@@ -52,6 +55,7 @@ const fetchRoutes =async (serverUrl , mkey) => {
 }
 
 const fetchFile = async (serverUrl,authKey,masterKey,routeId) => {
+    let returner = null
     const url = `${serverUrl}/fetch/${routeId}?authkey=${authKey}&master_key=${masterKey}&ses=1`;
     console.log(`Request URL: ${url}`);
     try {
@@ -97,7 +101,7 @@ const fetchFile = async (serverUrl,authKey,masterKey,routeId) => {
       if (granted === PermissionsAndroid.RESULTS.GRANTED) {
         const base64Data = base64.fromByteArray(new Uint8Array(response.data));
         await RNFS.writeFile(path, base64Data, 'base64');
-        CameraRoll.saveAsset(`file://${path}`,{album:"Camera"}).then(onfulfilled => console.log(onfulfilled))
+        returner = await CameraRoll.saveAsset(`file://${path}`,{album:"Camera"}).then(onfulfilled => console.log(onfulfilled))
         //Alert.alert('Success', `File successfully downloaded to ${path}`);
       } else {
         Alert.alert('Permission Denied', 'Storage permission denied');
@@ -111,20 +115,12 @@ const fetchFile = async (serverUrl,authKey,masterKey,routeId) => {
       }
       Alert.alert('Error', `Error fetching the file: ${error.message}`);
     }
+    console.log("RETURNER")
+    return returner;
 };
 
 const uploadFile = async (serverUrl,photo,authkey,mkey) => {
-    console.log("PHOTO OBJECT TO BE UPLOADED: ",photo)
-    const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-        {
-          title: 'Storage Permission',
-          message: 'This app needs access to your storage to download files.',
-          buttonNeutral: 'Ask Me Later',
-          buttonNegative: 'Cancel',
-          buttonPositive: 'OK',
-        }
-    );
+    console.log("Started Upload : ",photo.node.image.uri)
     const uri = photo.node.image.uri;
     const filename = "test.jpg";
     const mimeType = 'image/jpg'
@@ -135,7 +131,7 @@ const uploadFile = async (serverUrl,photo,authkey,mkey) => {
         name: filename,
         });
     
-    fullurl = `${serverUrl}/upload?authkey=${authkey}&master_key=${mkey}`
+    fullurl = `${fixURL(serverUrl)}/upload?authkey=${authkey}&master_key=${mkey}`
     const response =  await fetch(fullurl, {
     method: 'POST',
     body: data,

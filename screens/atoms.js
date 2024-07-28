@@ -76,6 +76,12 @@ const keyPairAtom = selector({
     }
 })
 
+
+const LastTSAtom = atom({
+    key: 'LastTSAtom',
+    default: Date.now(),
+})
+
 const ThemeAtom = atom({
     key: 'ThemeAtom',
     default: selector({
@@ -102,4 +108,4 @@ const authblobSelector = selector({
 })
 
 
-module.exports = {authblobSelector, ThemeAtom , keyPairAtom , userIDAtom , sessionIDAtom , relayServerAtom , motherServerAtom, relayServerKeyAtom,sessionPassAtom}
+module.exports = {authblobSelector, ThemeAtom , keyPairAtom , userIDAtom , sessionIDAtom , relayServerAtom , motherServerAtom, relayServerKeyAtom,sessionPassAtom,LastTSAtom}
