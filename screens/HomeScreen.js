@@ -319,6 +319,7 @@ export default function HomeScreen({ navigation }) {
               setUserID(res.userid)
               setSessionID(res.sessionid)
               SetCreating(false)
+              setCreateSessionModelOpen(false)
               navigation.navigate('Listening')
               }
             }>
@@ -388,6 +389,7 @@ export default function HomeScreen({ navigation }) {
               setRelayServerUrl(connectionString.split("||")[1])
               setRelayServerKey(connectionString.split("||")[0])
               setJoining(false)
+              setJoinSessionModelOpen(false)
               navigation.navigate('Listening')
               }}>
               <View className="flex-row">
