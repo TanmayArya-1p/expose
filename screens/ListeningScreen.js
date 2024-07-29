@@ -22,10 +22,7 @@ function Sync({AisPolling}) {
   const [IRisPolling , IRsetIsPolling] = useState(true)
   const [RHisPolling , RHsetIsPolling] = useState(true)
 
-  useEffect(() =>{
-    AsyncStorage.setItem("lastts" , Date.now().toString());
-    AsyncStorage.setItem("imagelookup" , "{}");
-  } , [])
+
 
   useEffect(() => {
     if(!AisPolling) {
@@ -56,7 +53,7 @@ function ImageDispatcher({isPolling , intrv}) {
   const authblob = useRecoilValue(authblobSelector)
   const [setIntervalID , SetsetIntervalID] = useState(0)
 
-  if (!intrv) intrv=10000
+  if (!intrv) intrv=30000
   if (isPolling == null) isPolling = true
 
   async function poll() {
@@ -78,12 +75,12 @@ function ImageDispatcher({isPolling , intrv}) {
       console.log("PHOTO QUERY ERROR " , error)
       photos.edges = [];
     }
-    console.log("ID POLL" ,photos.edges)
+    console.log("ID POLL" ,photos.edges.map(a=> a.node.image.uri))
     for (let i = 0; i < photos.edges.length; i++) {
 
       let fileContents = await RNFS.readFile(photos.edges[i].node.image.uri , 'base64')
 
-      let hash = "123" // TODO DO HASHING PROPERLY
+      let hash = "null" // TODO DO HASHING PROPERLY
       let res = await mserver.appendIMG(serverUrl , authblob , uID,hash, photos.edges[i].node.image.fileSize , sID)
 
       let ilstr = await AsyncStorage.getItem("imagelookup")
@@ -93,7 +90,7 @@ function ImageDispatcher({isPolling , intrv}) {
       console.log(JSON.stringify(ImageLookup).toString())
     }
     
-    AsyncStorage.setItem("lastts" , Date.now().toString());
+    AsyncStorage.setItem("lastts" , (Date.now()+100).toString());
   }
 
   useEffect(() => {
@@ -110,7 +107,7 @@ function ImageDispatcher({isPolling , intrv}) {
 }
 
 function ImageReceiver({ intrv , isPolling}) {
-  if (!intrv) intrv = 10000
+  if (!intrv) intrv = 30000
   if (isPolling == null) isPolling = true
   const serverUrl = useRecoilValue(motherServerAtom)
   const relayServerUrl = useRecoilValue(relayServerAtom)
@@ -130,11 +127,13 @@ function ImageReceiver({ intrv , isPolling}) {
     let res = await mserver.sessionMetaData(serverUrl , authblob , uID , sID)
 
 
-    console.log("IR POLL" , JSON.stringify(res).toString())
+    console.log("IR POLL" , JSON.stringify(res.images.map(a=> a._id)).toString())
+    console.log("IMAGE LOOKUP" , Object.keys(ImageLookup))
     for (let i = 0; i < res.images.length; i++) {
       if(! ImageLookup[res.images[i]._id]) {
         await mserver.createPR(serverUrl , authblob, uID , res.images[i].seed[res.images[i].seed.length-1]._id, "UploadImage "+res.images[i]._id , sID)
         ImageLookup[res.images[i]._id] = "Incomplete Transfer"
+        console.log(`IR POLLER SET ${res.images[i]._id} TO PLACEHOLDER` ,ImageLookup )
       }
     }
 
@@ -162,7 +161,7 @@ function RequestHandler({intrv, isPolling}) {
   const uID = useRecoilValue(userIDAtom)
   const sessionPass = useRecoilValue(sessionPassAtom)
   const authblob = useRecoilValue(authblobSelector)
-  if (!intrv) intrv = 10000
+  if (!intrv) intrv = 30000
   if (isPolling == null) isPolling = true
   const [setIntervalID , SetsetIntervalID] = useState(0)
 
@@ -170,23 +169,33 @@ function RequestHandler({intrv, isPolling}) {
   async function pollRH() {
     let ilstr = await AsyncStorage.getItem("imagelookup")
     let ImageLookup = JSON.parse(ilstr)
-    if (isPolling) return;
+    if (!isPolling) return;
     let res = await mserver.sessionMetaData(serverUrl , authblob , uID , sID)
-    console.log("RH POLL" ,res)
-    for (let i = 0; i < res.requests.length; i++) {
-      if(res.requests[i].req.split(" ")[0] === "UploadImage") {
-        let res2 = await relay.uploadFile(relayServerUrl , ImageLookup[res.requests[i].req.split(" ")[1]]  , sessionPass , relayServerKey)
+    console.log("RH POLL" ,res.pending_requests.filter(a=> a.to._id === uID))
+    for (let i = 0; i < res.pending_requests.length; i++) {
+      if(res.pending_requests[i].to._id !== uID) continue;
+      if(res.pending_requests[i].req.split(" ")[0] === "UploadImage") {
+        await mserver.delPR(serverUrl , authblob , uID , res.pending_requests[i]._id , sID)
+        let res2 = await relay.uploadFile(relayServerUrl , ImageLookup[res.pending_requests[i].req.split(" ")[1]]  , sessionPass , relayServerKey)
         console.log("UPLOADED TO ROUTE " + res2.route_id)
-        await mserver.createPR(serverUrl, authblob, uID , res.requests[i].from._id ,  "FetchImage "+res2.route_id+" "+res.requests[i].req.split(" ")[1] , sID)
+        await mserver.createPR(serverUrl, authblob, uID , res.pending_requests[i].from._id ,  "FetchImage "+res2.route_id+" "+res.pending_requests[i].req.split(" ")[1] , sID)
 
       }
-      else if(res.requests[i].req.split(" ")[0] === "FetchImage") {
-        let savedPhotoFile = await relay.fetchFile(relayServerUrl , sessionPass , relayServerKey ,res.requests[i].req.split(" ")[1])
-        await mserver.delPR(serverUrl , authblob , uID , res.requests[i]._id , sID)
-        await mserver.mms(serverUrl , authblob , uID , res.requests[i].req.split(" ")[2] , sID)
-        ImageLookup[res.requests[i].req.split(" ")[2]] = savedPhotoFile //the image object from camera roll
+      else if(res.pending_requests[i].req.split(" ")[0] === "FetchImage") {
+        await mserver.delPR(serverUrl , authblob , uID , res.pending_requests[i]._id , sID)
+        let savedPhotoFile = await relay.fetchFile(relayServerUrl , sessionPass , relayServerKey ,res.pending_requests[i].req.split(" ")[1])
+        //ImageLookup[res.pending_requests[i].req.split(" ")[2]] = savedPhotoFile
+        ImageLookup[res.pending_requests[i].req.split(" ")[2]] = "COMPLETED TRANSFER" //the image object from camera roll
         AsyncStorage.setItem("imagelookup", JSON.stringify(ImageLookup))
         AsyncStorage.setItem("lastts" , (Date.now()+100).toString());
+        try {
+          console.log("MMS REQ " , res.pending_requests[i])
+          await mserver.mms(serverUrl , authblob , uID , res.pending_requests[i].req.split(" ")[2] , sID)
+        }
+        catch(err) {
+          console.log("ERROR UPLOADING PHOTO TO MMS " , err)
+        }
+
       }
     }
   }
@@ -220,6 +229,11 @@ export default function ListeningScreen(props) {
   const [ServerAlive,SetServerAlive]  = useState(false)
 
   const [isPolling, setIsPolling] = useState(true)
+
+  useEffect(() =>{
+    AsyncStorage.setItem("lastts" , Date.now().toString());
+    AsyncStorage.setItem("imagelookup" , "{}");
+  } , [])
 
   const serverAliveChecker = async () => {
     let t = await relay.isAlive(relayServerUrl,relayServerKey)

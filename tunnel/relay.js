@@ -23,9 +23,11 @@ async function isAlive(url,key) {
     try {
         const controller = new AbortController();
         setTimeout(() => controller.abort(), TIMEOUT);
+        console.log("KEY",fixURL(url)+"/?master_key="+key)
         const res = await axios.get(fixURL(url)+"/?master_key="+key, {
             signal: controller.signal
         })
+        console.log(res.data)
         if(res.data.message === "Key Verified") {
             return {
                 "serverStat" : true,
@@ -56,7 +58,7 @@ const fetchRoutes =async (serverUrl , mkey) => {
 
 const fetchFile = async (serverUrl,authKey,masterKey,routeId) => {
     let returner = null
-    const url = `${serverUrl}/fetch/${routeId}?authkey=${authKey}&master_key=${masterKey}&ses=1`;
+    const url = `${fixURL(serverUrl)}/fetch/${routeId}?authkey=${authKey}&master_key=${masterKey}`;
     console.log(`Request URL: ${url}`);
     try {
       const response = await axios.get(url, { responseType: 'arraybuffer' });

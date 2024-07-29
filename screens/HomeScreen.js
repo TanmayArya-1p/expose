@@ -25,7 +25,7 @@ async function dealWithPerms() {
   const bPerms = await PermissionsAndroid.check('android.permission.READ_EXTERNAL_STORAGE');
   console.log("PERMS:")
   console.log("WRITE_EXTERNAL_STORAGE , READ_EXTERNAL_STORAGE")
-  console.log(aPerms && bPerms)
+  console.log(aPerms,bPerms)
   return (aPerms && bPerms)
 }
 
@@ -91,7 +91,10 @@ export default function HomeScreen({ navigation }) {
       const aPerms = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE)
       const bPerms = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE) 
       const granted = aPerms && bPerms
-      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+      console.log(aPerms,bPerms)
+      // TODO: RESET PERMS WORKAROUD FOR EMULATOR 
+      //if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+      if (granted) {
         setHasPermission(true)
       } else {
         setHasPermission(false)
@@ -357,16 +360,16 @@ export default function HomeScreen({ navigation }) {
                 setJoining(false)
                 return;
               }
-              res = await relay.isAlive(RelayServerUrl , relayServerKey)
+              res = await relay.isAlive(connectionString.split("||")[1] , connectionString.split("||")[0])
               console.log(res)
               if(!res.serverStat) {
-                console.log("INVALID RELAY SERVER URL: " + RelayServerUrl)
+                console.log("INVALID RELAY SERVER URL: " + connectionString.split("||")[1])
                 Toast.show('Invalid Relay Server URL');
                 setJoining(false)
                 return;
               }
               if(!res.keyStat) {
-                console.log("INVALID RELAY SERVER KEY: " + RelayServerUrl)
+                console.log("INVALID RELAY SERVER KEY: " + connectionString.split("||")[0])
                 Toast.show('Invalid Relay Server Key');
                 setJoining(false)
                 return;

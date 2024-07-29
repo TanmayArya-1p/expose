@@ -119,7 +119,7 @@ async function createPR(url,authblob, userid, to , request,sid) {
     };
 
     const res = await axios.request(config)
-    console.log("CREATE PR RESP " , res)
+    console.log("CREATE PR RESP " , res.data)
     return res.data
 }
 
@@ -140,7 +140,7 @@ async function delPR(url, authblob,userid, prid , sid) {
     data : data
     };
     const response = await axios.request(config);
-    console.log("DELETE PR RESP "+response.data)
+    console.log("DELETE PR RESP ", JSON.stringify(response.data).toString())
     return response.data
 
 }
@@ -168,6 +168,8 @@ async function appendIMG(url , authblob ,userid, hash , size , sid) {
     console.log("APPEND IMG RESPONSE",JSON.stringify(res.data).toString())
     return res.data
 }
+// TODO DEEP LINKING
+// TODO: FIGURE OUT PERMISSIONS ON ANDROID >12
 
 async function mms(url, authblob, userid, imgid ,sid) {
     let data = JSON.stringify({
@@ -187,7 +189,7 @@ async function mms(url, authblob, userid, imgid ,sid) {
     };
 
     const res = await axios.request(config)
-    console.log("MMS RESP " + res.data)
+    console.log("MMS RESP ", JSON.stringify(res.data).toString() )
     return res.data
 }
 
