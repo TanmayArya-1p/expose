@@ -11,7 +11,7 @@ import Modal from "react-native-modal";
 import Svg, { Path } from "react-native-svg"
 import Icon from 'react-native-vector-icons/Ionicons'
 import { ThemeAtom , keyPairAtom , userIDAtom , sessionIDAtom , relayServerAtom , motherServerAtom, relayServerKeyAtom , sessionPassAtom} from './atoms'
-import { useRecoilState, useRecoilValue, useRecoilValueLoadable } from 'recoil';
+import { useRecoilState, useRecoilStateLoadable, useRecoilValue, useRecoilValueLoadable } from 'recoil';
 import RNPasswordStrengthMeter from 'react-native-password-strength-meter';
 import Toast from 'react-native-simple-toast';
 
@@ -49,37 +49,41 @@ export default function HomeScreen({ navigation }) {
 
   const [connectionString, setConnectionString] = useState("")
 
-  const [ThemeAtomValue, setThemeAtomValue] = useRecoilState(ThemeAtom)
+  const [ThemeAtomValue, setThemeAtomValue] = useRecoilStateLoadable(ThemeAtom)
   const [isEnabled , setEnabled] = useState(ThemeAtomValue == "light" ? false : true);
 
-  const [ServerUrl , setServerUrl] = useRecoilState(motherServerAtom)
-  const [RelayServerUrl, setRelayServerUrl] = useRecoilState(relayServerAtom)
-  const [relayServerKey, setRelayServerKey] = useRecoilState(relayServerKeyAtom)
+  const [ServerUrl , setServerUrl] = useRecoilStateLoadable(motherServerAtom)
+  const [RelayServerUrl, setRelayServerUrl] = useRecoilStateLoadable(relayServerAtom)
+  const [relayServerKey, setRelayServerKey] = useRecoilStateLoadable(relayServerKeyAtom)
 
   const keypair = useRecoilValueLoadable(keyPairAtom)
 
   useEffect(() => {
     async function setter() {
-      AsyncStorage.setItem("MServerURL" , ServerUrl)
+      if(ServerUrl.state === "loading") return;
+      AsyncStorage.setItem("MServerURL" , ServerUrl.contents)
     }
     setter()
   } , [ServerUrl])
   useEffect(() => {
     async function setter() {
-      AsyncStorage.setItem("RServerURL" , RelayServerUrl)
+      if(RelayServerUrl.state === "loading") return;
+      AsyncStorage.setItem("RServerURL" , RelayServerUrl.contents)
     }
     setter()
   } , [RelayServerUrl])
   useEffect(() => {
     async function setter() {
-      AsyncStorage.setItem("RServerKey" , relayServerKey)
+      if(relayServerKey.state === "loading") return;
+      AsyncStorage.setItem("RServerKey" , relayServerKey.contents)
     }
     setter()
   } , [relayServerKey])
   useEffect(() => {
     async function setter() {
-      AsyncStorage.setItem("Theme" , ThemeAtomValue)
-      console.log(ThemeAtomValue)
+      if(ThemeAtomValue.state === "loading") return;
+      AsyncStorage.setItem("Theme" , ThemeAtomValue.contents)
+      console.log(ThemeAtomValue.contents)
     }
     setter()
   } , [ThemeAtomValue])
@@ -107,15 +111,16 @@ export default function HomeScreen({ navigation }) {
 
   useEffect(() => {
     const fetchPermissions = async () => {
-      const result = await dealWithPerms();
-      console.log("RESULT", result);
-      setHasPermission(result);
+      dealWithPerms().then((result) => {
+        console.log("RESULT", result);
+        setHasPermission(result);
+      })
     };
     fetchPermissions();
     requestStoragePermissions()
   }, []);
   //console.log(hasPermission)
-  if (hasPermission === null) {
+  if (hasPermission === null || relayServerKey.state !== 'hasValue' || RelayServerUrl.state !== 'hasValue' || ServerUrl.state !== 'hasValue' || ThemeAtomValue.state !== 'hasValue'  ) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color="#0000ff" />
@@ -183,7 +188,7 @@ export default function HomeScreen({ navigation }) {
             <TextInput
               style={styles.input}
               placeholder="Enter Server URL"
-              value={ServerUrl}
+              value={ServerUrl.contents}
               onChangeText={setServerUrl}
               placeholderTextColor="#666"
               className="w-[90%] h-10"
@@ -204,7 +209,7 @@ export default function HomeScreen({ navigation }) {
               <TextInput
                 style={styles.input}
                 placeholder="Server URL"
-                value={RelayServerUrl}
+                value={RelayServerUrl.contents}
                 onChangeText={setRelayServerUrl}
                 placeholderTextColor="#666"
                 className="w-[40%] h-10"
@@ -214,7 +219,7 @@ export default function HomeScreen({ navigation }) {
               <TextInput
                 style={styles.input}
                 placeholder="Access Key"
-                value={relayServerKey}
+                value={relayServerKey.contents}
                 onChangeText={setRelayServerKey}
                 placeholderTextColor="#666"
                 className="h-10 w-[33%]"
@@ -293,28 +298,28 @@ export default function HomeScreen({ navigation }) {
 
             <TouchableOpacity disabled={!hasPermission} className="mt-5" style = {styles.container} onPress={async () => {
               SetCreating(true)
-              let res = await mserver.isAlive(ServerUrl)
+              let res = await mserver.isAlive(ServerUrl.contents)
               if (!res) {
-                console.log("INVALID SERVER URL: " + ServerUrl)
+                console.log("INVALID SERVER URL: " + ServerUrl.contents)
                 Toast.show('Invalid Server URL');
                 SetCreating(false)
                 return;
               }
-              res = await relay.isAlive(RelayServerUrl , relayServerKey)
+              res = await relay.isAlive(RelayServerUrl.contents , relayServerKey.contents)
               console.log(res)
               if(!res.serverStat) {
-                console.log("INVALID RELAY SERVER URL: " + RelayServerUrl)
+                console.log("INVALID RELAY SERVER URL: " + RelayServerUrl.contents)
                 Toast.show('Invalid Relay Server URL');
                 SetCreating(false)
                 return;
               }
               if(!res.keyStat) {
-                console.log("INVALID RELAY SERVER KEY: " + RelayServerUrl)
+                console.log("INVALID RELAY SERVER KEY: " + RelayServerUrl.contents)
                 Toast.show('Invalid Relay Server Key');
                 SetCreating(false)
                 return;
               }
-              res = await mserver.createSession(ServerUrl , sessionPass, keypair.contents.publicKey)
+              res = await mserver.createSession(ServerUrl.contents , sessionPass, keypair.contents.publicKey)
               console.log(res)
               setUserID(res.userid)
               setSessionID(res.sessionid)
@@ -354,9 +359,9 @@ export default function HomeScreen({ navigation }) {
 
             <TouchableOpacity disabled={!hasPermission} className="m-2" style = {styles.container} onPress={async () => {
               setJoining(true)
-              let res = await mserver.isAlive(ServerUrl) 
+              let res = await mserver.isAlive(ServerUrl.contents) 
               if (!res) {
-                console.log("INVALID SERVER URL: " + ServerUrl)
+                console.log("INVALID SERVER URL: " + ServerUrl.contents)
                 Toast.show('Invalid Server URL');
                 setJoining(false)
                 return;
@@ -376,7 +381,7 @@ export default function HomeScreen({ navigation }) {
                 return;
               }
               try {
-                res = await mserver.joinSession(connectionString, ServerUrl, keypair.contents.publicKey)
+                res = await mserver.joinSession(connectionString, ServerUrl.contents, keypair.contents.publicKey)
 
               }
               catch (error) {
