@@ -78,8 +78,6 @@ function ImageDispatcher({isPolling , intrv}) {
     console.log("ID POLL" ,photos.edges.map(a=> a.node.image.uri))
     for (let i = 0; i < photos.edges.length; i++) {
 
-      let fileContents = await RNFS.readFile(photos.edges[i].node.image.uri , 'base64')
-
       let hash = "null" // TODO DO HASHING PROPERLY
       let res = await mserver.appendIMG(serverUrl , authblob , uID,hash, photos.edges[i].node.image.fileSize , sID)
 
@@ -176,7 +174,7 @@ function RequestHandler({intrv, isPolling}) {
       if(res.pending_requests[i].to._id !== uID) continue;
       if(res.pending_requests[i].req.split(" ")[0] === "UploadImage") {
         await mserver.delPR(serverUrl , authblob , uID , res.pending_requests[i]._id , sID)
-        let res2 = await relay.uploadFile(relayServerUrl , ImageLookup[res.pending_requests[i].req.split(" ")[1]]  , sessionPass , relayServerKey)
+        let res2 = await relay.uploadFile(relayServerUrl , ImageLookup[res.pending_requests[i].req.split(" ")[1]]  , sessionPass , relayServerKey , res.pending_requests[i].from.pubkey)
         console.log("UPLOADED TO ROUTE " + res2.route_id)
         await mserver.createPR(serverUrl, authblob, uID , res.pending_requests[i].from._id ,  "FetchImage "+res2.route_id+" "+res.pending_requests[i].req.split(" ")[1] , sID)
 
@@ -185,7 +183,7 @@ function RequestHandler({intrv, isPolling}) {
         await mserver.delPR(serverUrl , authblob , uID , res.pending_requests[i]._id , sID)
         let savedPhotoFile = await relay.fetchFile(relayServerUrl , sessionPass , relayServerKey ,res.pending_requests[i].req.split(" ")[1])
         //ImageLookup[res.pending_requests[i].req.split(" ")[2]] = savedPhotoFile
-        ImageLookup[res.pending_requests[i].req.split(" ")[2]] = "COMPLETED TRANSFER" //the image object from camera roll
+        ImageLookup[res.pending_requests[i].req.split(" ")[2]] = "COMPLETED TRANSFER" //TODO: image object from camera roll
         AsyncStorage.setItem("imagelookup", JSON.stringify(ImageLookup))
         AsyncStorage.setItem("lastts" , (Date.now()+100).toString());
         try {

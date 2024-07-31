@@ -97,6 +97,8 @@ export default function HomeScreen({ navigation }) {
       const granted = aPerms && bPerms
       console.log(aPerms,bPerms)
       // TODO: RESET PERMS WORKAROUD FOR EMULATOR 
+      // TODO: FILE ENCRYPTION
+
       //if (granted === PermissionsAndroid.RESULTS.GRANTED) {
       if (granted) {
         setHasPermission(true)
