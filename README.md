@@ -8,7 +8,7 @@
 
 ### How the App Works
 
-Expose is a semi-peer-to-peer (semi-P2P) photo-sharing app to synchronize your photo library seamlessly with other users within a session. Here’s how it works:
+Expose is a peer-to-peer photo-sharing app to synchronize your photo library seamlessly with other users within a session. Here’s how it works:
 
 - Session Creation: Initiate a session to start sharing photos. Upon session creation, a unique Concat String or QR Code is generated, which other users can utilize to join your session.
 <h1 align="center">
