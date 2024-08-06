@@ -121,83 +121,30 @@ const fetchFile = async (serverUrl,authKey,masterKey,routeId) => {
     return returner;
 };
 
-// const uploadFile = async (serverUrl,photo,authkey,mkey) => {
-//     console.log("Started Upload : ",photo.node.image.uri)
-//     const uri = photo.node.image.uri;
-//     const filename = "test.jpg";
-//     const mimeType = 'image/jpg'
-//     const data = new FormData();
-//         data.append('file', {
-//         uri: uri,
-//         type: mimeType,
-//         name: filename,
-//         });
+const uploadFile = async (serverUrl,photo,authkey,mkey) => {
+    console.log("Started Upload : ",photo.node.image.uri)
+    const uri = photo.node.image.uri;
+    const filename = "test.jpg";
+    const mimeType = 'image/jpg'
+    const data = new FormData();
+        data.append('file', {
+        uri: uri,
+        type: mimeType,
+        name: filename,
+        });
     
-//     fullurl = `${fixURL(serverUrl)}/upload?authkey=${authkey}&master_key=${mkey}`
-//     const response =  await fetch(fullurl, {
-//     method: 'POST',
-//     body: data,
-//     });
-//     const r= await response.json()
-//     console.log("Uploaded Image")
-//     return r;
-// }
-
-
-
-async function encryptFile(filePath, publicKeyString) {
-  const fileContent = await RNFS.readFile(filePath, 'base64');
-  const SymmetricKey = await AES.randomKey(32);
-  let encryptKeyContent = await RSA.encrypt(SymmetricKey, publicKeyString);
-  const encryptedContent = await AES.encrypt(fileContent, symmetricKey, 'base64');
-
-  const combinedContent = `${encryptKeyContent}\n\n${encryptedContent}`;
-  return combinedContent;
-}
-
-
-const uploadFile = async (serverUrl,photo,authkey,mkey,pubkey) => {
-  console.log("Started Upload : ",photo.node.image.uri)
-  const uri = photo.node.image.uri;
-  console.log("ENCRYPTING")
-  let encryptedFile = null
-  try {
-    encryptedFile = await encryptFile(uri, pubkey);
-  }
-  catch (err) {
-    console.log(err);
-  }
-
-  console.log("ENCRYPTED")
-  try {
-    await RNFS.writeFile(`${RNFS.DocumentDirectoryPath}/encryptedFile.txt`, encryptedFile, 'base64');
-  }
-  catch (err) {
-    console.log("WRITE ERROR"+err);
-  }
-  console.log("FINISHED CREATING TEMP TXT FILE")
-  let formData = new FormData();
-  formData.append('file', {
-    uri: `${RNFS.DocumentDirectoryPath}/encryptedFile.txt`,
-    name: 'encryptedFile.txt',
-    type: 'application/octet-stream'
-  });
-  console.log("BEFORE REQUEST")
-  let response = null
-  try {
-    response = await axios.post(`${fixURL(serverUrl)}/upload?authkey=${authkey}&master_key=${mkey}`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
+    fullurl = `${fixURL(serverUrl)}/upload?authkey=${authkey}&master_key=${mkey}`
+    const response =  await fetch(fullurl, {
+    method: 'POST',
+    body: data,
     });
-  }
-  catch (err) {
-    console.log(err);
-  }
-
-  console.log("AFTER REQUEST")
-  console.log(response.data);
-  console.log("Uploaded Image")
-  return response.data;
+    const r= await response.json()
+    console.log("Uploaded Image")
+    return r;
 }
+
+
+
 
 module.exports = {uploadFile,fetchFile,fetchRoutes,isAlive};
 
