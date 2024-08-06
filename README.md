@@ -4,7 +4,11 @@
 </h1>
 
 
+(Expose currently doesnt work on Android 14 because of the new Permissions API)
 
+### TO-DO
+1. E2E Encryption
+2. Android 14 Support
 
 ### How the App Works
 
@@ -32,3 +36,5 @@ Expose is a peer-to-peer photo-sharing app to synchronize your photo library sea
 2. Make sure you setup [FRelay](https://github.com/TanmayArya-1p/FRelay) on a machine and port-forward to the Internet using [ngrok](https://ngrok.com/) or [localtunnel](https://theboroer.github.io/localtunnel-www/)
 3. On Installing the App, provide the app permissions for media access and camera access to scan QR codes.
 4. If you accidentally decline any requests for permissions, the only way to enable it is to do it manually via settings.
+
+
