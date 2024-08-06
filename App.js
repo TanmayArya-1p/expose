@@ -6,6 +6,9 @@ import JoinSessionScreen from './screens/JoinSessionScreen';
 import CreateSessionScreen from './screens/CreateSessionScreen';
 import ListeningScreen from './screens/ListeningScreen';
 import { FileLogger } from "react-native-file-logger";
+import { RecoilRoot } from 'recoil';
+import Toast from 'react-native-toast-message';
+
 const Stack = createStackNavigator();
 
 
@@ -17,7 +20,8 @@ async function enableLogging() {
 
 export default function App() {
   enableLogging()
-  return (
+  return (<>
+      <RecoilRoot>
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Home">
         <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false}}/>
@@ -26,6 +30,11 @@ export default function App() {
         <Stack.Screen name="Listening" component={ListeningScreen} options={{title:""}}/>
       </Stack.Navigator>
     </NavigationContainer>
+    </RecoilRoot> 
+    <Toast />
+
+  </>
+
   );
 }
 

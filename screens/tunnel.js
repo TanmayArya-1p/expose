@@ -306,7 +306,7 @@ const photoLibListener = async (serverUrl,skey,sid,mkey,sessionstart) => {
 }
 
 
-export {uploadFile,fetchFile,fetchRoutes,fetchSessions,sessionDestroy,sessionCreate,appendImg,sessionFetch,isAlive,startListenerThread};
+module.exports = {uploadFile,fetchFile,fetchRoutes,fetchSessions,sessionDestroy,sessionCreate,appendImg,sessionFetch,isAlive,startListenerThread};
 
 
 
